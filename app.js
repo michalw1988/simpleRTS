@@ -71,6 +71,16 @@ io.sockets.on('connection', function(socket){
 		updateLobbyPlayersList();
 	});
 	
+	socket.on('lobbyChatMessage',function(data){
+		var message = PLAYER_LIST[data.id].name + ': ' + data.message
+		for(var i in SOCKET_LIST){
+			var socket = SOCKET_LIST[i];
+			socket.emit('lobbyChatMessageToDisplay',message);
+		}
+	});
+	
+	
+	
 	socket.on('keyPress',function(data){
 		if(data.inputId === 'left')
 			player.pressingLeft = data.state;

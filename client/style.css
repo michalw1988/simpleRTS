@@ -80,6 +80,7 @@ body {
 	border-right: 2px solid #cccccc;
 	width:300px;
 	height: 543px;
+	text-align: left;
 }
 
 #lobbyChatContainerDiv{
@@ -88,6 +89,7 @@ body {
 	left: 300px;
 	width: 600px;
 	height: 543px;
+	text-align: left;
 }
 
 #playersListContainerDiv{
@@ -102,10 +104,9 @@ body {
 }
 
 #playersListDiv{
-	background-color: #eeeeee;
-	--border: 1px solid black;
+	background-color: #D8E4E8;
 	width: 290px;
-	height: 520px;
+	height: 522px;
 	font-size: 14px;
 	color: #336699;
 	overflow-y:scroll;
@@ -132,6 +133,61 @@ body {
 	color: #336699;
 	background-color: #cccccc;
 }
+
+#lobbyChatDiv{
+	background-color: #D8E4E8;
+	width: 590px;
+	height: 492px;
+	font-size: 14px;
+	margin-left: 5px;
+	color: #336699;
+	overflow-y:scroll;
+}
+
+#lobbyChatInput{
+	margin: 5px;
+	width: 590px;
+	border: 1px solid #cccccc;
+	height: 24px;
+	background-color: #eeeeee;
+	color: #336699;
+}
+
+
+
+#roomScreenDiv{
+	display: none;
+	position: relative;
+	border: 1px solid black;
+	width: 1200px;
+	height: 600px;
+	margin: 0 auto; 
+	background-color: #336699;
+	text-align: center;
+	color: #cccccc;
+}
+
+#roomHeaderDiv{
+	border-bottom: 2px solid #cccccc;
+	width: 100%;
+	height: 55px;
+	font-size: 40px;
+}
+
+#backToLobbyButton{
+	position: absolute;
+	right: 3px;
+	top: 3px;
+	border: 0px solid #cccccc;
+	width: 100px;
+	height: 24px;
+	color: #336699;
+	background-color: #cccccc;
+}
+
+
+
+
 
 
 

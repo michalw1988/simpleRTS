@@ -20,20 +20,24 @@
 		<button id="logoutButton">Logout</button>
 	</div>
 	<div id="gamesListContainerDiv">
-		Games list
+		<b>Open games (click to join)</b>
 		<button id="openRoomButton">Create new game</button>
 	</div>
 	<div id="lobbyChatContainerDiv">
-		Chat
+		<b>&nbsp;Chat</b>
+		<div id="lobbyChatDiv"></div>
+		<input id="lobbyChatInput" type="text" placeholder="Enter your message"></input>
 	</div>
 	<div id="playersListContainerDiv">
 		<b>All players</b>
-		<div id="playersListDiv">
-			<div>Player 1 (playing)</div>
-			<div>Player 2 (playing)</div>
-			<div>Player 3</div>
-			<div>Player 4</div>
-		</div>
+		<div id="playersListDiv"></div>
+	</div>
+</div>
+
+<div id="roomScreenDiv">
+	<div id="roomHeaderDiv">
+		simpleRTS
+		<button id="backToLobbyButton">Back to lobby</button>
 	</div>
 </div>
 
@@ -58,7 +62,13 @@
 	var lobbyScreenDiv = document.getElementById("lobbyScreenDiv");
 	var openRoomButton = document.getElementById("openRoomButton");
 	var logoutButton = document.getElementById("logoutButton");
+	var lobbyChatDiv = document.getElementById("lobbyChatDiv");
+	var lobbyChatInput = document.getElementById("lobbyChatInput");
 	var playersListDiv = document.getElementById("playersListDiv");
+	
+	var roomScreenDiv = document.getElementById("roomScreenDiv");
+	var backToLobbyButton = document.getElementById("backToLobbyButton");
+	
 	
 	var gameDiv = document.getElementById("gameDiv");
 	
@@ -68,16 +78,30 @@
 		socket.emit('joinedLobby',{name:nameInput.value});
 	}
 	
-	openRoomButton.onclick = function(){
-		alert('new game room');
-	}
-	
 	logoutButton.onclick = function(){
 		lobbyScreenDiv.style.display = 'none';
 		loginScreenDiv.style.display = 'block';
 		socket.emit('leftLobby');
 	}
-
+	
+	openRoomButton.onclick = function(){
+		lobbyScreenDiv.style.display = 'none';
+		roomScreenDiv.style.display = 'block';
+	}
+	
+	lobbyChatInput.onkeyup = function(e){
+		if(e.keyCode === 13){
+			socket.emit('lobbyChatMessage',{id:selfId,message:lobbyChatInput.value});
+			lobbyChatInput.value = '';
+		}
+	};
+	
+	backToLobbyButton.onclick = function(){
+		roomScreenDiv.style.display = 'none';
+		lobbyScreenDiv.style.display = 'block';
+	}
+	
+	
 	
 	socket.on('selfId',function(data){
 		selfId = data;
@@ -93,6 +117,11 @@
 				playersListDiv.innerHTML += player.name + '<br>';
 			}
 		}
+	});
+	
+	socket.on('lobbyChatMessageToDisplay',function(data){
+		lobbyChatDiv.innerHTML += '<div>' + data + '</div>';
+		lobbyChatDiv.scrollTop = lobbyChatDiv.scrollHeight;
 	});
 	
 	
