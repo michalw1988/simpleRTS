@@ -1,0 +1,142 @@
+body {
+	background-color: #eeeeee;
+	font-family: Verdana;
+}
+
+
+
+#loginScreenDiv{
+	border: 1px solid black;
+	width: 1200px;
+	height: 600px;
+	margin: 0 auto; 
+	background-color: #336699;
+	text-align: center;
+	color: #cccccc;
+}
+
+#gameNameDiv{
+	position: absolute;
+	top: calc(50% - 130px);
+	left: calc(50% - 150px);
+	width: 300px;
+	height: 100px;
+	font-size: 40px;
+}
+
+#enterNameDiv{
+	position: absolute;
+	top: calc(50% - 70px);
+	left: calc(50% - 155px);
+	border: 2px solid #cccccc;
+	width: 300px;
+	padding: 5px;
+}
+
+#nameInput{
+	margin: 5px;
+	width: 150px;
+	border: 1px solid #cccccc;
+	height: 24px;
+	background-color: #eeeeee;
+	color: #336699;
+}
+
+
+#loginButton{
+	margin: 5px;
+	border: 0px solid #cccccc;
+	width: 100px;
+	height: 24px;
+	color: #336699;
+	background-color: #cccccc;
+}
+
+
+
+#lobbyScreenDiv{
+	display: none;
+	position: relative;
+	border: 1px solid black;
+	width: 1200px;
+	height: 600px;
+	margin: 0 auto; 
+	background-color: #336699;
+	text-align: center;
+	color: #cccccc;
+}
+
+#lobbyHeaderDiv{
+	border-bottom: 2px solid #cccccc;
+	width: 100%;
+	height: 55px;
+	font-size: 40px;
+}
+
+#gamesListContainerDiv{
+	position: absolute;
+	top: 57px;
+	left: 0px;
+	border-right: 2px solid #cccccc;
+	width:300px;
+	height: 543px;
+}
+
+#lobbyChatContainerDiv{
+	position: absolute;
+	top: 57px;
+	left: 300px;
+	width: 600px;
+	height: 543px;
+}
+
+#playersListContainerDiv{
+	position: absolute;
+	top: 57px;
+	left: 900px;
+	border-left: 2px solid #cccccc;
+	width: 300px;
+	height: 543px;
+	text-align: left;
+	padding-left: 4px;
+}
+
+#playersListDiv{
+	background-color: #eeeeee;
+	--border: 1px solid black;
+	width: 290px;
+	height: 520px;
+	font-size: 14px;
+	color: #336699;
+	overflow-y:scroll;
+}
+
+#openRoomButton{
+	position: absolute;
+	left: 3px;
+	bottom: 3px;
+	border: 0px solid #cccccc;
+	width: 294px;
+	height: 24px;
+	color: #336699;
+	background-color: #cccccc;
+}
+
+#logoutButton{
+	position: absolute;
+	right: 3px;
+	top: 3px;
+	border: 0px solid #cccccc;
+	width: 100px;
+	height: 24px;
+	color: #336699;
+	background-color: #cccccc;
+}
+
+
+
+
+#gameDiv{
+	display:none;
+	
+}

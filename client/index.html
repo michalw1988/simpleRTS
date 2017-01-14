@@ -1,12 +1,80 @@
-simpleRTS
-<canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+<head>
+	<title>simpleRTS</title>
+	<link rel="stylesheet" type="text/css" href="client/style.css">
+</head>
+
+<div id="loginScreenDiv">
+	<div id="gameNameDiv">
+		simpleRTS
+	</div>
+	<div id="enterNameDiv">
+		Your name
+		<input id="nameInput" type="text"></input><br>
+		<button id="loginButton">Login</button>
+	</div>
+</div>
+
+<div id="lobbyScreenDiv">
+	<div id="lobbyHeaderDiv">
+		simpleRTS
+		<button id="logoutButton">Logout</button>
+	</div>
+	<div id="gamesListContainerDiv">
+		Games list
+		<button id="openRoomButton">Create new game</button>
+	</div>
+	<div id="lobbyChatContainerDiv">
+		Chat
+	</div>
+	<div id="playersListContainerDiv">
+		<b>All players</b>
+		<div id="playersListDiv">
+			<div>Player 1 (playing)</div>
+			<div>Player 2 (playing)</div>
+			<div>Player 3</div>
+			<div>Player 4</div>
+		</div>
+	</div>
+</div>
+
+<div id="gameDiv">
+	<canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+</div>
 
 <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+
 <script>
 	var ctx = document.getElementById("ctx").getContext("2d");
+	var loginScreenDiv = document.getElementById("loginScreenDiv");
+	var nameInput = document.getElementById("nameInput");
+	var loginButton = document.getElementById("loginButton");
+	
+	var lobbyScreenDiv = document.getElementById("lobbyScreenDiv");
+	var openRoomButton = document.getElementById("openRoomButton");
+	var logoutButton = document.getElementById("logoutButton");
+	
+	var gameDiv = document.getElementById("gameDiv");
+	
+	loginButton.onclick = function(){
+		loginScreenDiv.style.display = 'none';
+		lobbyScreenDiv.style.display = 'block';
+	}
+	
+	openRoomButton.onclick = function(){
+		alert('new game room');
+	}
+	
+	logoutButton.onclick = function(){
+		lobbyScreenDiv.style.display = 'none';
+		loginScreenDiv.style.display = 'block';
+	}
+	
 	ctx.font = '30px Arial';
 
 	var socket = io();
+	window.onbeforeunload = function() {
+		socket.disconnect(); 
+	}
 	
 	socket.on('newPositions',function(data){
 		ctx.clearRect(0,0,500,500);
