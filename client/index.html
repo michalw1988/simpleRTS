@@ -44,6 +44,12 @@
 <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 
 <script>
+	var socket = io();
+	var selfId = null;
+	window.onbeforeunload = function() {
+		socket.disconnect(); 
+	}
+	
 	var ctx = document.getElementById("ctx").getContext("2d");
 	var loginScreenDiv = document.getElementById("loginScreenDiv");
 	var nameInput = document.getElementById("nameInput");
@@ -52,12 +58,14 @@
 	var lobbyScreenDiv = document.getElementById("lobbyScreenDiv");
 	var openRoomButton = document.getElementById("openRoomButton");
 	var logoutButton = document.getElementById("logoutButton");
+	var playersListDiv = document.getElementById("playersListDiv");
 	
 	var gameDiv = document.getElementById("gameDiv");
 	
 	loginButton.onclick = function(){
 		loginScreenDiv.style.display = 'none';
 		lobbyScreenDiv.style.display = 'block';
+		socket.emit('joinedLobby',{name:nameInput.value});
 	}
 	
 	openRoomButton.onclick = function(){
@@ -67,14 +75,26 @@
 	logoutButton.onclick = function(){
 		lobbyScreenDiv.style.display = 'none';
 		loginScreenDiv.style.display = 'block';
+		socket.emit('leftLobby');
 	}
-	
-	ctx.font = '30px Arial';
 
-	var socket = io();
-	window.onbeforeunload = function() {
-		socket.disconnect(); 
-	}
+	
+	socket.on('selfId',function(data){
+		selfId = data;
+	});
+	
+	socket.on('lobbyPlayersListUpdate',function(data){
+		playersListDiv.innerHTML = "";
+		for(var i = 0; i < data.length; i++){
+			var player = data[i];
+			if (player.id === selfId){
+				playersListDiv.innerHTML += '<b>' + player.name + '</b><br>';
+			} else {
+				playersListDiv.innerHTML += player.name + '<br>';
+			}
+		}
+	});
+	
 	
 	socket.on('newPositions',function(data){
 		ctx.clearRect(0,0,500,500);
