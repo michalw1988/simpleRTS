@@ -21,6 +21,7 @@
 	</div>
 	<div id="gamesListContainerDiv">
 		<b>Open games (click to join)</b>
+		<div id="gamesListDiv"></div>
 		<button id="openRoomButton">Create new game</button>
 	</div>
 	<div id="lobbyChatContainerDiv">
@@ -38,6 +39,16 @@
 	<div id="roomHeaderDiv">
 		simpleRTS
 		<button id="backToLobbyButton">Back to lobby</button>
+	</div>
+	<div id="gameOptionsContainerDiv">
+		<b>Game options</b>
+	</div>
+	<div id="roomChatContainerDiv">
+		<b>&nbsp;Chat</b>
+	</div>
+	<div id="roomPlayersListContainerDiv">
+		<b>Players</b>
+		<div id="roomPlayersListDiv"></div>
 	</div>
 </div>
 
@@ -68,15 +79,19 @@
 	
 	var roomScreenDiv = document.getElementById("roomScreenDiv");
 	var backToLobbyButton = document.getElementById("backToLobbyButton");
-	
+	var roomPlayersListDiv = document.getElementById("roomPlayersListDiv");
 	
 	var gameDiv = document.getElementById("gameDiv");
+	
+	// login screen
 	
 	loginButton.onclick = function(){
 		loginScreenDiv.style.display = 'none';
 		lobbyScreenDiv.style.display = 'block';
 		socket.emit('joinedLobby',{name:nameInput.value});
 	}
+	
+	// lobby screen
 	
 	logoutButton.onclick = function(){
 		lobbyScreenDiv.style.display = 'none';
@@ -87,6 +102,7 @@
 	openRoomButton.onclick = function(){
 		lobbyScreenDiv.style.display = 'none';
 		roomScreenDiv.style.display = 'block';
+		socket.emit('createNewGame');
 	}
 	
 	lobbyChatInput.onkeyup = function(e){
@@ -95,6 +111,8 @@
 			lobbyChatInput.value = '';
 		}
 	};
+	
+	// room screen
 	
 	backToLobbyButton.onclick = function(){
 		roomScreenDiv.style.display = 'none';
@@ -123,6 +141,23 @@
 		lobbyChatDiv.innerHTML += '<div>' + data + '</div>';
 		lobbyChatDiv.scrollTop = lobbyChatDiv.scrollHeight;
 	});
+	
+	socket.on('lobbyGamesListUpdate',function(data){
+		gamesListDiv.innerHTML = "";
+		console.log(data.length + 'open rooms.');
+		for(var i = 0; i < data.length; i++){
+			var g = data[i];
+			gamesListDiv.innerHTML += "<button id='" + g.id + "' style='background-color: #D8E4E8; border:0px; color: #336699; margin-left: 3px; margin-bottom: 4px; height: 30px; width: 272px;'>" + g.name + "'s game</button>";
+		}
+	});
+	
+	socket.on('gamePlayersListUpdate',function(data){
+		roomPlayersListDiv.innerHTML = 'Player 1: ' + data.player1.name + '<br>';
+		if (data.player2 !== ""){
+			roomPlayersListDiv.innerHTML += 'Player 2: ' + data.player2.name + '<br>';
+		}
+	});
+	
 	
 	
 	socket.on('newPositions',function(data){

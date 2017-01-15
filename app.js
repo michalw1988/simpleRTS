@@ -12,12 +12,15 @@ console.log("--- simpleRTS server started ---");
 
 var SOCKET_LIST = {};
 var PLAYER_LIST = {};
+var GAME_LIST = {};
 
 var Player = function(id){
 	var self = {
 		id:id,
 		name:"",
 		isInLobby:false,
+		gameId:"",
+		playing:false,
 		
 		x:250,
 		y:250,
@@ -41,6 +44,18 @@ var Player = function(id){
 	return self;
 }
 
+var Game = function(id){
+	var self = {
+		id:id,
+		player1Id:"",
+		player2Id:"",
+		started:false,
+	}
+	return self;
+}
+
+// ---------------------------------------------- //
+
 var io = require('socket.io')(serv,{});
 io.sockets.on('connection', function(socket){
 	socket.id = Math.random();
@@ -63,6 +78,7 @@ io.sockets.on('connection', function(socket){
 		player.name = data.name;
 		console.log('Player "' + player.name + '" joined lobby.');
 		updateLobbyPlayersList();
+		updateLobbyGamesList();
 	});
 	
 	socket.on('leftLobby',function(){
@@ -77,6 +93,18 @@ io.sockets.on('connection', function(socket){
 			var socket = SOCKET_LIST[i];
 			socket.emit('lobbyChatMessageToDisplay',message);
 		}
+	});
+	
+	socket.on('createNewGame',function(){
+		var id = Math.random();
+		var game = Game(id);
+		GAME_LIST[id] = game;
+		PLAYER_LIST[socket.id].gameId = id;
+		game.player1Id = socket.id;
+		console.log(PLAYER_LIST[socket.id].name + ' opened new game.');
+		console.log(GAME_LIST);
+		updateGamePlayersList(id);
+		updateLobbyGamesList();
 	});
 	
 	
@@ -127,4 +155,33 @@ var updateLobbyPlayersList = function(){
 		var socket = SOCKET_LIST[i];
 		socket.emit('lobbyPlayersListUpdate',lobbyPlayersList);
 	}
+}
+
+var updateGamePlayersList = function(id){
+	var player1 = {id:GAME_LIST[id].player1Id, name:PLAYER_LIST[GAME_LIST[id].player1Id].name};
+	var player2 = "";
+	if (GAME_LIST[id].player2Id !== ""){
+		player2 = {id:GAME_LIST[id].player2Id, name:PLAYER_LIST[GAME_LIST[id].player2Id].name};
+	}
+	SOCKET_LIST[player1.id].emit('gamePlayersListUpdate',{player1:player1, player2:player2});
+	
+	if (GAME_LIST[id].player2Id !== ""){
+		SOCKET_LIST[player2.id].emit('gamePlayersListUpdate',{player1:player1, player2:player2});
+	}
+}
+
+var updateLobbyGamesList = function(){
+	var gamesList = [];
+	for(var i in GAME_LIST){
+		var g = GAME_LIST[i];
+		gamesList.push({
+			id:g.id,
+			name:PLAYER_LIST[g.player1Id].name,
+		});
+	}
+	for(var i in SOCKET_LIST){
+		var socket = SOCKET_LIST[i];
+		socket.emit('lobbyGamesListUpdate',gamesList);
+	}
+	console.log(gamesList);
 }
