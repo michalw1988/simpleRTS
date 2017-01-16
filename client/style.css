@@ -180,12 +180,25 @@ body {
 	font-size: 40px;
 }
 
-#backToLobbyButton{
+#closeTheGameButton{
 	position: absolute;
+	display: none;
 	right: 3px;
 	top: 3px;
 	border: 0px solid #cccccc;
-	width: 100px;
+	width: 120px;
+	height: 24px;
+	color: #336699;
+	background-color: #cccccc;
+}
+
+#leaveTheGameButton{
+	position: absolute;
+	display: none;
+	right: 3px;
+	top: 3px;
+	border: 0px solid #cccccc;
+	width: 120px;
 	height: 24px;
 	color: #336699;
 	background-color: #cccccc;

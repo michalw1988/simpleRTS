@@ -67,11 +67,21 @@ io.sockets.on('connection', function(socket){
 	socket.emit('selfId',socket.id);
 	
 	socket.on('disconnect',function(){
-		// if need to close room
+		// if need to close room or update someone's room list
 		var player = PLAYER_LIST[socket.id];
 		if (player.gameId !== ""){
-			delete GAME_LIST[player.gameId];
-			updateLobbyGamesList();
+			var game = GAME_LIST[player.gameId];
+			if (game.player1Id === socket.id){ // close room
+				if (game.player2Id !== ""){ // kick othr player if needed
+				PLAYER_LIST[game.player2Id].gameId = "";
+				SOCKET_LIST[game.player2Id].emit('kickedFromRoom');
+			}
+				delete GAME_LIST[player.gameId];
+				updateLobbyGamesList();
+			} else if (game.player2Id === socket.id){ // update list
+				game.player2Id = "";
+				updateGamePlayersList(game.id);
+			}	
 		}
 		
 		delete SOCKET_LIST[socket.id];
@@ -112,23 +122,35 @@ io.sockets.on('connection', function(socket){
 		console.log(GAME_LIST);
 		updateGamePlayersList(id);
 		updateLobbyGamesList();
+		SOCKET_LIST[socket.id].emit('gameID',{id:id});
 	});
 	
 	socket.on('closeRoom',function(data){
-		for(var i in GAME_LIST){
-			var game = GAME_LIST[i];
-			if(game.player1Id = data.player1Id){
-				delete GAME_LIST[game.id];
-			}
+		var game = GAME_LIST[data.gameId];
+		PLAYER_LIST[game.player1Id].gameId = "";
+		if (game.player2Id !== ""){
+			PLAYER_LIST[game.player2Id].gameId = "";
+			SOCKET_LIST[game.player2Id].emit('kickedFromRoom');
 		}
+		delete GAME_LIST[data.gameId];
 		updateLobbyGamesList();
+	});
+	
+	socket.on('leaveRoom',function(data){
+		console.log(GAME_LIST);
+		var game = GAME_LIST[data.gameId];
+		PLAYER_LIST[game.player2Id].gameId = "";
+		GAME_LIST[data.gameId].player2Id = "";
+		updateGamePlayersList(data.gameId);
 	});
 	
 	socket.on('joinGame',function(data){
 		console.log('player ' + data.player2Id + ' joins the ' + data.gameId + ' game.');
 		GAME_LIST[data.gameId].player2Id = data.player2Id;
+		PLAYER_LIST[socket.id].gameId = data.gameId;
 		console.log(GAME_LIST);
 		updateGamePlayersList(data.gameId);
+		SOCKET_LIST[socket.id].emit('gameID',{id:data.gameId});
 	});
 	
 	
