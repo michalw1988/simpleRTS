@@ -117,6 +117,7 @@
 	backToLobbyButton.onclick = function(){
 		roomScreenDiv.style.display = 'none';
 		lobbyScreenDiv.style.display = 'block';
+		socket.emit('closeRoom',{player1Id:selfId});
 	}
 	
 	
@@ -147,7 +148,7 @@
 		console.log(data.length + 'open rooms.');
 		for(var i = 0; i < data.length; i++){
 			var g = data[i];
-			gamesListDiv.innerHTML += "<button id='" + g.id + "' style='background-color: #D8E4E8; border:0px; color: #336699; margin-left: 3px; margin-bottom: 4px; height: 30px; width: 272px;'>" + g.name + "'s game</button>";
+			gamesListDiv.innerHTML += "<button id='" + g.id + "' style='background-color: #D8E4E8; border:0px; color: #336699; margin-left: 3px; margin-bottom: 4px; height: 30px; width: 272px;' onclick='joinGame(" + g.id + ")'>" + g.name + "'s game</button>";
 		}
 	});
 	
@@ -185,5 +186,11 @@
 			socket.emit('keyPress',{inputId:'left',state:false});
 		else if(event.keyCode === 87) // w
 			socket.emit('keyPress',{inputId:'up',state:false});
+	}
+	
+	var joinGame = function(gameId){
+		lobbyScreenDiv.style.display = 'none';
+		roomScreenDiv.style.display = 'block';
+		socket.emit('joinGame',{gameId:gameId,player2Id:selfId});
 	}
 </script>

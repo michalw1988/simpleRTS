@@ -67,6 +67,13 @@ io.sockets.on('connection', function(socket){
 	socket.emit('selfId',socket.id);
 	
 	socket.on('disconnect',function(){
+		// if need to close room
+		var player = PLAYER_LIST[socket.id];
+		if (player.gameId !== ""){
+			delete GAME_LIST[player.gameId];
+			updateLobbyGamesList();
+		}
+		
 		delete SOCKET_LIST[socket.id];
 		delete PLAYER_LIST[socket.id];
 		console.log('Player "' + player.name + '" disconnected.');
@@ -106,6 +113,24 @@ io.sockets.on('connection', function(socket){
 		updateGamePlayersList(id);
 		updateLobbyGamesList();
 	});
+	
+	socket.on('closeRoom',function(data){
+		for(var i in GAME_LIST){
+			var game = GAME_LIST[i];
+			if(game.player1Id = data.player1Id){
+				delete GAME_LIST[game.id];
+			}
+		}
+		updateLobbyGamesList();
+	});
+	
+	socket.on('joinGame',function(data){
+		console.log('player ' + data.player2Id + ' joins the ' + data.gameId + ' game.');
+		GAME_LIST[data.gameId].player2Id = data.player2Id;
+		console.log(GAME_LIST);
+		updateGamePlayersList(data.gameId);
+	});
+	
 	
 	
 	
