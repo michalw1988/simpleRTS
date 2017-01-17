@@ -71,17 +71,17 @@ io.sockets.on('connection', function(socket){
 		var player = PLAYER_LIST[socket.id];
 		if (player.gameId !== ""){
 			var game = GAME_LIST[player.gameId];
-			if (game.player1Id === socket.id){ // close room
-				if (game.player2Id !== ""){ // kick othr player if needed
+			if (game.player1Id === socket.id){ // player was host - close room
+				if (game.player2Id !== ""){ // kick other player if needed
 				PLAYER_LIST[game.player2Id].gameId = "";
 				SOCKET_LIST[game.player2Id].emit('kickedFromRoom');
 			}
 				delete GAME_LIST[player.gameId];
-				updateLobbyGamesList();
-			} else if (game.player2Id === socket.id){ // update list
+			} else if (game.player2Id === socket.id){ // player was guest - update game players list
 				game.player2Id = "";
 				updateGamePlayersList(game.id);
-			}	
+			}
+			updateLobbyGamesList();
 		}
 		
 		delete SOCKET_LIST[socket.id];
@@ -142,6 +142,7 @@ io.sockets.on('connection', function(socket){
 		PLAYER_LIST[game.player2Id].gameId = "";
 		GAME_LIST[data.gameId].player2Id = "";
 		updateGamePlayersList(data.gameId);
+		updateLobbyGamesList();
 	});
 	
 	socket.on('joinGame',function(data){
@@ -150,6 +151,7 @@ io.sockets.on('connection', function(socket){
 		PLAYER_LIST[socket.id].gameId = data.gameId;
 		console.log(GAME_LIST);
 		updateGamePlayersList(data.gameId);
+		updateLobbyGamesList();
 		SOCKET_LIST[socket.id].emit('gameID',{id:data.gameId});
 	});
 	
@@ -224,6 +226,7 @@ var updateLobbyGamesList = function(){
 		gamesList.push({
 			id:g.id,
 			name:PLAYER_LIST[g.player1Id].name,
+			player2Id:g.player2Id,
 		});
 	}
 	for(var i in SOCKET_LIST){

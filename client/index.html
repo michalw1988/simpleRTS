@@ -9,7 +9,7 @@
 	</div>
 	<div id="enterNameDiv">
 		Your name
-		<input id="nameInput" type="text"></input><br>
+		<input id="nameInput" type="text" placeholder="Enter your nickname"></input><br>
 		<button id="loginButton">Login</button>
 	</div>
 </div>
@@ -89,16 +89,27 @@
 	// login screen
 	
 	loginButton.onclick = function(){
-		loginScreenDiv.style.display = 'none';
-		lobbyScreenDiv.style.display = 'block';
-		socket.emit('joinedLobby',{name:nameInput.value});
+		if(nameInput.value !== ""){
+			loginScreenDiv.style.display = 'none';
+			lobbyScreenDiv.style.display = 'block';
+			socket.emit('joinedLobby',{name:nameInput.value});
+		}
 	}
+	
+	nameInput.onkeyup = function(e){
+		if(e.keyCode === 13 && nameInput.value !== ""){
+			loginScreenDiv.style.display = 'none';
+			lobbyScreenDiv.style.display = 'block';
+			socket.emit('joinedLobby',{name:nameInput.value});
+		}
+	};
 	
 	// lobby screen
 	
 	logoutButton.onclick = function(){
 		lobbyScreenDiv.style.display = 'none';
 		loginScreenDiv.style.display = 'block';
+		nameInput.value = "";
 		socket.emit('leftLobby');
 	}
 	
@@ -162,7 +173,11 @@
 		console.log(data.length + 'open rooms.');
 		for(var i = 0; i < data.length; i++){
 			var g = data[i];
-			gamesListDiv.innerHTML += "<button id='" + g.id + "' style='background-color: #D8E4E8; border:0px; color: #336699; margin-left: 3px; margin-bottom: 4px; height: 30px; width: 272px;' onclick='joinGame(" + g.id + ")'>" + g.name + "'s game</button>";
+			if (g.player2Id === ""){
+				gamesListDiv.innerHTML += "<button id='" + g.id + "' style='background-color: #D8E4E8; border:0px; color: #336699; margin-left: 3px; margin-bottom: 4px; height: 30px; width: 272px;' onclick='joinGame(" + g.id + ")'>" + g.name + "'s game</button>";
+			} else {
+				gamesListDiv.innerHTML += "<button id='" + g.id + "' style='background-color: #D8E4E8; border:0px; color: #336699; margin-left: 3px; margin-bottom: 4px; height: 30px; width: 272px;'>" + g.name + "'s game (full)</button>";
+			}
 		}
 	});
 	
