@@ -49,6 +49,7 @@ var Game = function(id){
 		id:id,
 		player1Id:"",
 		player2Id:"",
+		ready:false,
 		started:false,
 	}
 	return self;
@@ -80,27 +81,28 @@ io.sockets.on('connection', function(socket){
 			} else if (game.player2Id === socket.id){ // player was guest - update game players list
 				game.player2Id = "";
 				updateGamePlayersList(game.id);
+				SOCKET_LIST[game.player1Id].emit('gameStartButton',{status:false});
 			}
 			updateLobbyGamesList();
 		}
 		
 		delete SOCKET_LIST[socket.id];
 		delete PLAYER_LIST[socket.id];
-		console.log('Player "' + player.name + '" disconnected.');
+		//console.log('Player "' + player.name + '" disconnected.');
 		updateLobbyPlayersList();
 	});
 	
 	socket.on('joinedLobby',function(data){
 		player.isInLobby = true;
 		player.name = data.name;
-		console.log('Player "' + player.name + '" joined lobby.');
+		//console.log('Player "' + player.name + '" joined lobby.');
 		updateLobbyPlayersList();
 		updateLobbyGamesList();
 	});
 	
 	socket.on('leftLobby',function(){
 		player.isInLobby = false;
-		console.log('Player "' + player.name + '" left lobby.');
+		//console.log('Player "' + player.name + '" left lobby.');
 		updateLobbyPlayersList();
 	});
 	
@@ -118,8 +120,6 @@ io.sockets.on('connection', function(socket){
 		GAME_LIST[id] = game;
 		PLAYER_LIST[socket.id].gameId = id;
 		game.player1Id = socket.id;
-		console.log(PLAYER_LIST[socket.id].name + ' opened new game.');
-		console.log(GAME_LIST);
 		updateGamePlayersList(id);
 		updateLobbyGamesList();
 		SOCKET_LIST[socket.id].emit('gameID',{id:id});
@@ -137,23 +137,59 @@ io.sockets.on('connection', function(socket){
 	});
 	
 	socket.on('leaveRoom',function(data){
-		console.log(GAME_LIST);
 		var game = GAME_LIST[data.gameId];
 		PLAYER_LIST[game.player2Id].gameId = "";
 		GAME_LIST[data.gameId].player2Id = "";
 		updateGamePlayersList(data.gameId);
 		updateLobbyGamesList();
+		SOCKET_LIST[game.player1Id].emit('gameStartButton',{status:false});
 	});
 	
 	socket.on('joinGame',function(data){
-		console.log('player ' + data.player2Id + ' joins the ' + data.gameId + ' game.');
 		GAME_LIST[data.gameId].player2Id = data.player2Id;
 		PLAYER_LIST[socket.id].gameId = data.gameId;
-		console.log(GAME_LIST);
+		
 		updateGamePlayersList(data.gameId);
 		updateLobbyGamesList();
 		SOCKET_LIST[socket.id].emit('gameID',{id:data.gameId});
 	});
+	
+	socket.on('roomChatMessage',function(data){
+		var game = GAME_LIST[data.gameId];
+		var message = PLAYER_LIST[data.playerId].name + ": " + data.message;
+		SOCKET_LIST[game.player1Id].emit('roomChatMessageToDisplay',{message:message});
+		if (game.player2Id !== ""){
+			SOCKET_LIST[game.player2Id].emit('roomChatMessageToDisplay',{message:message});
+		}
+	});
+	
+	socket.on('gameReady',function(data){
+		var game = GAME_LIST[data.gameId];
+		if(data.status === true){
+			game.ready = true;
+			SOCKET_LIST[game.player1Id].emit('gameStartButton',{status:true});
+		} else {
+			game.ready = false;
+			SOCKET_LIST[game.player1Id].emit('gameStartButton',{status:false});
+		}
+	});
+	
+	socket.on('startGame',function(data){
+		var game = GAME_LIST[data.gameId];
+		var player1 = PLAYER_LIST[game.player1Id];
+		var player2 = PLAYER_LIST[game.player2Id];
+		game.started = true;
+		player1.playing = true;
+		player2.playing = true;
+		SOCKET_LIST[game.player1Id].emit('gameStarted',{player1name:player1.name, player2name:player2.name});
+		SOCKET_LIST[game.player2Id].emit('gameStarted',{player1name:player1.name, player2name:player2.name});
+	});
+	
+	
+	
+	
+	
+	
 	
 	
 	
@@ -233,5 +269,4 @@ var updateLobbyGamesList = function(){
 		var socket = SOCKET_LIST[i];
 		socket.emit('lobbyGamesListUpdate',gamesList);
 	}
-	console.log(gamesList);
 }

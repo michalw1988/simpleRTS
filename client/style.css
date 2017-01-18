@@ -242,10 +242,112 @@ body {
 	color: #336699;
 }
 
+#roomChatDiv{
+	background-color: #D8E4E8;
+	width: 590px;
+	height: 492px;
+	font-size: 14px;
+	margin-left: 5px;
+	color: #336699;
+	overflow-y:scroll;
+}
+
+#roomChatInput{
+	margin: 5px;
+	width: 590px;
+	border: 1px solid #cccccc;
+	height: 24px;
+	background-color: #eeeeee;
+	color: #336699;
+}
+
+#startGameButton{
+	position: absolute;
+	display: none;
+	left: 3px;
+	bottom: 3px;
+	border: 0px solid #cccccc;
+	width: 294px;
+	height: 24px;
+	color: #336699;
+	background-color: #cccccc;
+}
+
+#startGameButton:disabled{
+	color: #666666;
+}
+
+#readyGameButton{
+	position: absolute;
+	display: none;
+	left: 3px;
+	bottom: 3px;
+	border: 0px solid #cccccc;
+	width: 294px;
+	height: 24px;
+	color: #336699;
+	background-color: #cccccc;
+}
+
 
 
 
 #gameDiv{
-	display:none;
-	
+	-display:block;
+	-top: 8px;
+	-left: 82px;
+	-position:absolute;
+	display: none;
+	position: relative;
+	border: 1px solid black;
+	width: 1200px;
+	height: 600px;
+	margin: 0 auto; 
+	background-color: #336699;
+	text-align: center;
+	color: #cccccc;
 }
+
+#gameTopBarDiv{
+	border-bottom: 2px solid #cccccc;
+	width: 100%;
+	height: 30px;
+}
+
+#surrenderButton{
+	position: absolute;
+	right: 3px;
+	top: 3px;
+	border: 0px solid #cccccc;
+	width: 120px;
+	height: 24px;
+	color: #336699;
+	background-color: #cccccc;
+}
+
+#gameCanvas{
+	width: 1200px;
+	height: 568px;
+	background-color: black;
+}
+
+#creditsDiv{
+	display: inline;
+	position: absolute;
+	left: 3px;
+	top: 6px;
+}
+
+#playersNamesDiv{
+	display: inline;
+	position: absolute;
+	right: 135px;
+	top: 6px;
+}
+
+
+
+
+
+
+

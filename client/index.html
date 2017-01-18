@@ -9,7 +9,7 @@
 	</div>
 	<div id="enterNameDiv">
 		Your name
-		<input id="nameInput" type="text" placeholder="Enter your nickname"></input><br>
+		<input id="nameInput" type="text" placeholder="Enter your nickname" maxlength="18"></input><br>
 		<button id="loginButton">Login</button>
 	</div>
 </div>
@@ -43,9 +43,13 @@
 	</div>
 	<div id="gameOptionsContainerDiv">
 		<b>Game options</b>
+		<button id="startGameButton" disabled>Start the game</button>
+		<button id="readyGameButton">I'm ready</button>
 	</div>
 	<div id="roomChatContainerDiv">
 		<b>&nbsp;Chat</b>
+		<div id="roomChatDiv"></div>
+		<input id="roomChatInput" type="text" placeholder="Enter your message"></input>
 	</div>
 	<div id="roomPlayersListContainerDiv">
 		<b>Players</b>
@@ -54,8 +58,18 @@
 </div>
 
 <div id="gameDiv">
-	<canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+	<div id="gameTopBarDiv">
+		<div id="creditsDiv">Credits: xxx</div>
+		
+		<div id="playersNamesDiv"></div>
+		
+		<button id="surrenderButton">Surrender</button>
+	</div>
+	<canvas id="gameCanvas"></canvas>
+	
 </div>
+
+<canvas id="ctx" width="500" height="500" style="border:1px solid #000000; display:none;"></canvas>
 
 <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 
@@ -83,8 +97,16 @@
 	var closeTheGameButton = document.getElementById("closeTheGameButton");
 	var leaveTheGameButton = document.getElementById("leaveTheGameButton");
 	var roomPlayersListDiv = document.getElementById("roomPlayersListDiv");
+	var roomChatDiv = document.getElementById("roomChatDiv");
+	var roomChatInput = document.getElementById("roomChatInput");
+	var startGameButton = document.getElementById("startGameButton");
+	var readyGameButton = document.getElementById("readyGameButton");
 	
 	var gameDiv = document.getElementById("gameDiv");
+	var playersNamesDiv = document.getElementById("playersNamesDiv");
+	var surrenderButton = document.getElementById("surrenderButton");
+	
+	
 	
 	// login screen
 	
@@ -117,15 +139,28 @@
 		lobbyScreenDiv.style.display = 'none';
 		roomScreenDiv.style.display = 'block';
 		closeTheGameButton.style.display = 'block';
+		startGameButton.style.display = 'block';
+		startGameButton.disabled = true;
+		roomChatDiv.innerHTML = "";
 		socket.emit('createNewGame');
 	}
 	
 	lobbyChatInput.onkeyup = function(e){
-		if(e.keyCode === 13){
+		if(e.keyCode === 13 && lobbyChatInput.value !== ""){
 			socket.emit('lobbyChatMessage',{id:selfId,message:lobbyChatInput.value});
 			lobbyChatInput.value = '';
 		}
 	};
+	
+	var joinGame = function(gameId){
+		lobbyScreenDiv.style.display = 'none';
+		roomScreenDiv.style.display = 'block';
+		leaveTheGameButton.style.display = 'block';
+		readyGameButton.style.display = 'block';
+		roomChatDiv.innerHTML = "";
+		readyGameButton.innerHTML = "I'm ready";
+		socket.emit('joinGame',{gameId:gameId,player2Id:selfId});
+	}
 	
 	// room screen
 	
@@ -133,6 +168,8 @@
 		roomScreenDiv.style.display = 'none';
 		lobbyScreenDiv.style.display = 'block';
 		closeTheGameButton.style.display = 'none';
+		startGameButton.style.display = 'none';
+		startGameButton.disabled = true;
 		socket.emit('closeRoom',{gameId:gameId});
 		gameId = "";
 	}
@@ -141,9 +178,39 @@
 		roomScreenDiv.style.display = 'none';
 		lobbyScreenDiv.style.display = 'block';
 		leaveTheGameButton.style.display = 'none';
+		readyGameButton.style.display = 'none';
+		readyGameButton.innerHTML = "I'm ready";
 		socket.emit('leaveRoom',{gameId:gameId});
 		gameId = "";
 	}
+	
+	roomChatInput.onkeyup = function(e){
+		if(e.keyCode === 13 && roomChatInput.value !== ""){
+			socket.emit('roomChatMessage',{gameId:gameId, playerId:selfId, message:roomChatInput.value});
+			roomChatInput.value = '';
+		}
+	};
+	
+	readyGameButton.onclick = function(){
+		if(readyGameButton.innerHTML === "I'm ready"){
+			readyGameButton.innerHTML = "I'm not ready";
+			socket.emit('gameReady',{gameId:gameId,status:true});
+		} else {
+			readyGameButton.innerHTML = "I'm ready";
+			socket.emit('gameReady',{gameId:gameId,status:false});
+		}
+	}
+	
+	startGameButton.onclick = function(){
+		socket.emit('startGame',{gameId:gameId});
+	}
+	
+	surrenderButton.onclick = function(){
+		alert('you lost the game');
+	}
+	
+	
+	
 	
 	
 	
@@ -170,7 +237,6 @@
 	
 	socket.on('lobbyGamesListUpdate',function(data){
 		gamesListDiv.innerHTML = "";
-		console.log(data.length + 'open rooms.');
 		for(var i = 0; i < data.length; i++){
 			var g = data[i];
 			if (g.player2Id === ""){
@@ -190,7 +256,6 @@
 	
 	socket.on('gameID',function(data){
 		gameId = data.id;
-		console.log(gameId);
 	})
 	
 	socket.on('kickedFromRoom',function(){
@@ -198,7 +263,30 @@
 		roomScreenDiv.style.display = 'none';
 		lobbyScreenDiv.style.display = 'block';
 		leaveTheGameButton.style.display = 'none';
+		readyGameButton.style.display = 'none';
 	});
+	
+	socket.on('roomChatMessageToDisplay',function(data){
+		roomChatDiv.innerHTML += '<div>' + data.message + '</div>';
+		roomChatDiv.scrollTop = roomChatDiv.scrollHeight;
+	});
+	
+	socket.on('gameStartButton',function(data){
+		if(data.status === true){
+			startGameButton.disabled = false;
+		} else {
+			startGameButton.disabled = true;
+		}
+	});
+	
+	socket.on('gameStarted',function(data){
+		gameDiv.style.display = 'block';
+		roomScreenDiv.style.display = 'none';
+		playersNamesDiv.innerHTML = '<div style="color:#52E365; display:inline;">' + data.player1name + '</div><div style="color:#cccccc; display:inline;">&nbsp;vs&nbsp;</div><div style="color:#E3E152; display:inline;">' + data.player2name + '</div>';
+	});
+	
+	
+	
 	
 	
 	
@@ -229,12 +317,5 @@
 			socket.emit('keyPress',{inputId:'left',state:false});
 		else if(event.keyCode === 87) // w
 			socket.emit('keyPress',{inputId:'up',state:false});
-	}
-	
-	var joinGame = function(gameId){
-		lobbyScreenDiv.style.display = 'none';
-		roomScreenDiv.style.display = 'block';
-		leaveTheGameButton.style.display = 'block';
-		socket.emit('joinGame',{gameId:gameId,player2Id:selfId});
 	}
 </script>
