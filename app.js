@@ -183,9 +183,34 @@ io.sockets.on('connection', function(socket){
 		player2.playing = true;
 		SOCKET_LIST[game.player1Id].emit('gameStarted',{player1name:player1.name, player2name:player2.name});
 		SOCKET_LIST[game.player2Id].emit('gameStarted',{player1name:player1.name, player2name:player2.name});
+		updateLobbyGamesList();
+		updateLobbyPlayersList();
 	});
 	
-	
+	socket.on('endGame',function(data){ // reason:'surrender', gameId:gameId, playerId:selfId
+		var game = GAME_LIST[data.gameId];
+		var player1 = PLAYER_LIST[game.player1Id];
+		var player2 = PLAYER_LIST[game.player2Id];
+		player1.playing = false;
+		player1.gameId = "";
+		player2.playing = false;
+		player2.gameId = "";
+		
+		if(data.reason === 'surrender'){
+			if(game.player1Id === data.playerId){ // player 1 surrendered
+				SOCKET_LIST[game.player1Id].emit('gameEnded',{message: '<div style="color: #F72828; margin-bottom: 2px;"><b>Game over.</b></div>You surrendered.'});
+				SOCKET_LIST[game.player2Id].emit('gameEnded',{message: '<div style="color: #3DF53D; margin-bottom: 2px;"><b>Congratulations!</b></div>Your opponent has surrendered.'});
+			} else { // player 2 surrendered
+				SOCKET_LIST[game.player1Id].emit('gameEnded',{message: '<div style="color: #3DF53D; margin-bottom: 2px;"><b>Congratulations!</b></div>Your opponent has surrendered.'});
+				SOCKET_LIST[game.player2Id].emit('gameEnded',{message: '<div style="color: #F72828; margin-bottom: 2px;"><b>Game over.</b></div>You surrendered.'});
+			}
+		
+		}
+		
+		delete GAME_LIST[data.gameId];
+		updateLobbyGamesList();
+		updateLobbyPlayersList();
+	});
 	
 	
 	
@@ -229,10 +254,14 @@ var updateLobbyPlayersList = function(){
 	var lobbyPlayersList = [];
 	for(var i in PLAYER_LIST){
 		var p = PLAYER_LIST[i];
+		var name = p.name;
+		if (p.playing === true){
+			name += ' (playing)';
+		}
 		if (p.isInLobby === true){
 			lobbyPlayersList.push({
 				id:p.id,
-				name:p.name,
+				name:name,
 			});	
 		}
 	}
@@ -259,11 +288,13 @@ var updateLobbyGamesList = function(){
 	var gamesList = [];
 	for(var i in GAME_LIST){
 		var g = GAME_LIST[i];
-		gamesList.push({
-			id:g.id,
-			name:PLAYER_LIST[g.player1Id].name,
-			player2Id:g.player2Id,
-		});
+		if (g.started === false){
+			gamesList.push({
+				id:g.id,
+				name:PLAYER_LIST[g.player1Id].name,
+				player2Id:g.player2Id,
+			});
+		}
 	}
 	for(var i in SOCKET_LIST){
 		var socket = SOCKET_LIST[i];

@@ -67,7 +67,17 @@
 	</div>
 	<canvas id="gameCanvas"></canvas>
 	
+	<div id="endGameMessageDiv">
+		<div id="endGameMessageBoxDiv">
+			message<br>line2
+		</div>
+		<button id="endGameMessageButton">Exit to lobby</button>
+	</div>
+	
 </div>
+
+
+
 
 <canvas id="ctx" width="500" height="500" style="border:1px solid #000000; display:none;"></canvas>
 
@@ -75,8 +85,8 @@
 
 <script>
 	var socket = io();
-	var selfId = null;
-	var gameId = null;
+	var selfId = "";
+	var gameId = "";
 	window.onbeforeunload = function() {
 		socket.disconnect(); 
 	}
@@ -105,6 +115,11 @@
 	var gameDiv = document.getElementById("gameDiv");
 	var playersNamesDiv = document.getElementById("playersNamesDiv");
 	var surrenderButton = document.getElementById("surrenderButton");
+	
+	var endGameMessageDiv = document.getElementById("endGameMessageDiv");
+	var endGameMessageBoxDiv = document.getElementById("endGameMessageBoxDiv");
+	var endGameMessageButton = document.getElementById("endGameMessageButton");
+	
 	
 	
 	
@@ -206,10 +221,15 @@
 	}
 	
 	surrenderButton.onclick = function(){
-		alert('you lost the game');
+		socket.emit('endGame',{reason:'surrender', gameId:gameId, playerId:selfId});	
 	}
 	
-	
+	endGameMessageButton.onclick = function(){
+		gameId = "";
+		endGameMessageDiv.style.display = 'none';
+		gameDiv.style.display = 'none';
+		lobbyScreenDiv.style.display = 'block';	
+	}
 	
 	
 	
@@ -282,7 +302,15 @@
 	socket.on('gameStarted',function(data){
 		gameDiv.style.display = 'block';
 		roomScreenDiv.style.display = 'none';
+		leaveTheGameButton.style.display = 'none';
+		readyGameButton.style.display = 'none';
+		readyGameButton.innerHTML = "I'm ready";
 		playersNamesDiv.innerHTML = '<div style="color:#52E365; display:inline;">' + data.player1name + '</div><div style="color:#cccccc; display:inline;">&nbsp;vs&nbsp;</div><div style="color:#E3E152; display:inline;">' + data.player2name + '</div>';
+	});
+	
+	socket.on('gameEnded',function(data){
+		endGameMessageDiv.style.display = 'block';
+		endGameMessageBoxDiv.innerHTML = data.message;
 	});
 	
 	
