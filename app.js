@@ -72,18 +72,35 @@ io.sockets.on('connection', function(socket){
 		var player = PLAYER_LIST[socket.id];
 		if (player.gameId !== ""){
 			var game = GAME_LIST[player.gameId];
-			if (game.player1Id === socket.id){ // player was host - close room
-				if (game.player2Id !== ""){ // kick other player if needed
-				PLAYER_LIST[game.player2Id].gameId = "";
-				SOCKET_LIST[game.player2Id].emit('kickedFromRoom');
-			}
+			
+			// if game not started
+			if (game.started === false){
+				if (game.player1Id === socket.id){ // player was host - close room
+					if (game.player2Id !== ""){ // kick other player if needed
+						PLAYER_LIST[game.player2Id].gameId = "";
+						SOCKET_LIST[game.player2Id].emit('kickedFromRoom');
+					}
+					delete GAME_LIST[player.gameId];
+				} else if (game.player2Id === socket.id){ // player was guest - update game players list
+					game.player2Id = "";
+					updateGamePlayersList(game.id);
+					SOCKET_LIST[game.player1Id].emit('gameStartButton',{status:false});
+				}
+				updateLobbyGamesList();
+			} else { // game started - player disconnected
+				if (game.player1Id === socket.id){ // player was host
+					PLAYER_LIST[game.player2Id].playing = false;
+					PLAYER_LIST[game.player2Id].gameId = "";
+					SOCKET_LIST[game.player2Id].emit('gameEnded',{message: '<div style="color: #3DF53D; margin-bottom: 2px;"><b>Game over!</b></div>Your opponent has disconnected.'});
+				} else if (game.player2Id === socket.id){ // player was guest
+					PLAYER_LIST[game.player1Id].playing = false;
+					PLAYER_LIST[game.player1Id].gameId = "";
+					SOCKET_LIST[game.player1Id].emit('gameEnded',{message: '<div style="color: #3DF53D; margin-bottom: 2px;"><b>Game over!</b></div>Your opponent has disconnected.'});
+				}
 				delete GAME_LIST[player.gameId];
-			} else if (game.player2Id === socket.id){ // player was guest - update game players list
-				game.player2Id = "";
-				updateGamePlayersList(game.id);
-				SOCKET_LIST[game.player1Id].emit('gameStartButton',{status:false});
+				updateLobbyGamesList();
+				updateLobbyPlayersList();
 			}
-			updateLobbyGamesList();
 		}
 		
 		delete SOCKET_LIST[socket.id];
@@ -204,7 +221,6 @@ io.sockets.on('connection', function(socket){
 				SOCKET_LIST[game.player1Id].emit('gameEnded',{message: '<div style="color: #3DF53D; margin-bottom: 2px;"><b>Congratulations!</b></div>Your opponent has surrendered.'});
 				SOCKET_LIST[game.player2Id].emit('gameEnded',{message: '<div style="color: #F72828; margin-bottom: 2px;"><b>Game over.</b></div>You surrendered.'});
 			}
-		
 		}
 		
 		delete GAME_LIST[data.gameId];
