@@ -51,6 +51,52 @@ var Game = function(id){
 		player2Id:"",
 		ready:false,
 		started:false,
+		player1Credits: 5000,
+		player2Credits: 5000,
+		player1Base: {x: 100, y: 284, hp: 100,},
+		player2Base: {x: 1100, y: 284, hp: 100,},
+		mines: [
+			{x: 50, y: 84, owner: 0,},
+			{x: 50, y: 484, owner: 0,},
+			{x: 1150, y: 84, owner: 0,},
+			{x: 1150, y: 484, owner: 0,},
+			{x: 600, y: 184, owner: 0,},
+			{x: 600, y: 384, owner: 0,},
+			{x: 450, y: 284, owner: 0,},
+			{x: 750, y: 284, owner: 0,},
+		],
+		player1Units: {},
+		player2Units: {},
+		
+	}
+	self.produceUnit = function(whichPlayer,type){
+		var id = Math.random();
+		var x = 0;
+		var y = 0;
+		if (whichPlayer === 1) {
+			x = self.player1Base.x + Math.random()*100 - 50;
+			y = self.player1Base.y + Math.random()*100 - 50;
+		} else {
+			x = self.player2Base.x + Math.random()*100 - 50;
+			y = self.player2Base.y + Math.random()*100 - 50;
+		}
+		var unit = Unit(id,type,x,y);
+		if (whichPlayer === 1) {
+			self.player1Units[id] = unit;
+		} else {
+			self.player2Units[id] = unit;
+		}
+	}
+	return self;
+}
+
+
+var Unit = function(id,type,x,y){
+	var self = {
+		id:id,
+		type: type,
+		x:x,
+		y:y,
 	}
 	return self;
 }
@@ -228,6 +274,16 @@ io.sockets.on('connection', function(socket){
 		updateLobbyPlayersList();
 	});
 	
+	socket.on('procudeUnit',function(data){
+		var game = GAME_LIST[data.gameId];
+		var whichPlayer = 0;
+		if(game.player1Id === data.playerId){
+			whichPlayer = 1;
+		} else {
+			whichPlayer = 2;
+		}
+		game.produceUnit(whichPlayer, data.type);
+	});
 	
 	
 	
@@ -317,3 +373,48 @@ var updateLobbyGamesList = function(){
 		socket.emit('lobbyGamesListUpdate',gamesList);
 	}
 }
+
+// updating game
+setInterval(function(){
+	for(var i in GAME_LIST){
+		var game = GAME_LIST[i];
+		if (game.started){
+			var updatePack = [];
+			updatePack = {
+				player1Base: game.player1Base,
+				player2Base: game.player2Base,
+				mines: game.mines,
+				player1Units: game.player1Units,
+				player2Units: game.player2Units,
+			};
+			
+			SOCKET_LIST[game.player1Id].emit('gameUpdate', updatePack);
+			SOCKET_LIST[game.player1Id].emit('creditsUpdate', {credits:game.player1Credits});
+			
+			SOCKET_LIST[game.player2Id].emit('gameUpdate', updatePack);
+			SOCKET_LIST[game.player2Id].emit('creditsUpdate', {credits:game.player1Credits});
+		}
+	}
+
+
+
+
+
+
+	/*
+	var pack = [];
+	for(var i in PLAYER_LIST){
+		var player = PLAYER_LIST[i];
+		player.updatePosition();
+		pack.push({
+			x:player.x,
+			y:player.y,
+			number:player.number
+		});	
+	}
+	for(var i in SOCKET_LIST){
+		var socket = SOCKET_LIST[i];
+		socket.emit('gameUpdate',pack);
+	}
+	*/
+},1000/25);

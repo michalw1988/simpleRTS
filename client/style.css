@@ -293,10 +293,6 @@ body {
 
 
 #gameDiv{
-	-display:block;
-	-top: 8px;
-	-left: 82px;
-	-position:absolute;
 	display: none;
 	position: relative;
 	border: 1px solid black;
@@ -336,6 +332,35 @@ body {
 	position: absolute;
 	left: 3px;
 	top: 6px;
+}
+
+#unitButtonsDiv{
+	position: absolute;
+	left: 160px;
+	top: 0px;
+	width: 600px;
+	height: 28px;
+	text-align: left;
+	padding-top: 3px;
+	border-left: 2px solid #cccccc;
+}
+
+.unitButton{
+	border: 0px solid #cccccc;
+	width: 60px;
+	height: 24px;
+	color: #cccccc;
+	background-color: #336699;
+	text-align: left;
+}
+
+.unitImage{
+	margin: 1px;
+}
+
+.unitLabel{
+	position: absolute;
+	top: 7px;
 }
 
 #playersNamesDiv{
@@ -384,4 +409,9 @@ body {
 	height: 24px;
 	color: #336699;
 	background-color: #cccccc;
+}
+
+
+#gameCanvas2{
+	background-color: black;
 }
