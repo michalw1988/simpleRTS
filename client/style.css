@@ -338,11 +338,12 @@ body {
 	position: absolute;
 	left: 160px;
 	top: 0px;
-	width: 600px;
+	width: 280px;
 	height: 28px;
 	text-align: left;
 	padding-top: 3px;
 	border-left: 2px solid #cccccc;
+	border-right: 2px solid #cccccc;
 }
 
 .unitButton{
@@ -361,6 +362,33 @@ body {
 .unitLabel{
 	position: absolute;
 	top: 7px;
+}
+
+#progressBarDiv{
+	position: absolute;
+	left: 450px;
+	top: 0px;
+	width: 106px;
+	height: 28px;
+	text-align: left;
+	padding-top: 3px;
+	border-right: 2px solid #cccccc;
+}
+
+#progressBarBackground{
+	position: absolute;
+	top: 9px;
+	width: 100px;
+	height: 13px;
+	background-color: #cccccc;
+}
+
+#progressBarProgress{
+	position: absolute;
+	top: 9px;
+	width: 0px;
+	height: 13px;
+	background-color: #7CC0D6;
 }
 
 #playersNamesDiv{
@@ -411,7 +439,3 @@ body {
 	background-color: #cccccc;
 }
 
-
-#gameCanvas2{
-	background-color: black;
-}

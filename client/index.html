@@ -62,9 +62,13 @@
 		<div id="creditsDiv"></div>
 		<div id="unitButtonsDiv">
 			<button id="unit1Button" class="unitButton"><img class="unitImage" src="client/img/unit1.png"><span class="unitLabel">&nbsp;$500</span></button>
-			<button id="unit2Button" class="unitButton"><img class="unitImage" src="client/img/unit1.png"><span class="unitLabel">&nbsp;$200</span></button>
+			<button id="unit2Button" class="unitButton"><img class="unitImage" src="client/img/unit1.png"><span class="unitLabel">&nbsp;$250</span></button>
 			<button id="unit3Button" class="unitButton"><img class="unitImage" src="client/img/unit1.png"><span class="unitLabel">&nbsp;$750</span></button>
 			<button id="unit4Button" class="unitButton"><img class="unitImage" src="client/img/unit1.png"><span class="unitLabel">&nbsp;$1500</span></button>
+		</div>
+		<div id="progressBarDiv">
+			<div id="progressBarBackground"></div>
+			<div id="progressBarProgress"></div>
 		</div>
 		
 		<div id="playersNamesDiv"></div>
@@ -89,6 +93,10 @@
 	var selfId = "";
 	var gameId = "";
 	var credits = "";
+	var unit1Cost = 500;
+	var unit2Cost = 250;
+	var unit3Cost = 750;
+	var unit4Cost = 1500;
 	window.onbeforeunload = function() {
 		socket.disconnect(); 
 	}
@@ -122,16 +130,18 @@
 	var endGameMessageBoxDiv = document.getElementById("endGameMessageBoxDiv");
 	var endGameMessageButton = document.getElementById("endGameMessageButton");
 	var gameCanvas = document.getElementById("gameCanvas").getContext("2d");
-	
 	var unit1Button = document.getElementById("unit1Button");
 	var unit2Button = document.getElementById("unit2Button");
 	var unit3Button = document.getElementById("unit3Button");
 	var unit4Button = document.getElementById("unit4Button");
+	var progressBarProgress = document.getElementById("progressBarProgress");
 	
 	
 	var Img = {};
 	Img.units = new Image();
 	Img.units.src = '/client/img/units.png';
+	Img.buildings = new Image();
+	Img.buildings.src = '/client/img/buildings.png';
 	
 	
 	// login screen
@@ -243,35 +253,51 @@
 	}
 	
 	unit1Button.onclick = function(){
-		socket.emit('procudeUnit',{
-			gameId: gameId,
-			playerId: selfId,
-			type: 1,
-		});
+		if(credits >= unit1Cost && progressBarProgress.style.width === '0px'){
+			socket.emit('procudeUnit',{
+				gameId: gameId,
+				playerId: selfId,
+				type: 1,
+				credits: 500,
+			});
+			credits -= 500;
+		}
 	}
 	
 	unit2Button.onclick = function(){
-		socket.emit('procudeUnit',{
-			gameId: gameId,
-			playerId: selfId,
-			type: 2,
-		});
+		if(credits >= unit2Cost && progressBarProgress.style.width === '0px'){
+			socket.emit('procudeUnit',{
+				gameId: gameId,
+				playerId: selfId,
+				type: 2,
+				credits: 250,
+			});
+			credits -= 250;
+		}
 	}
 	
 	unit3Button.onclick = function(){
-		socket.emit('procudeUnit',{
-			gameId: gameId,
-			playerId: selfId,
-			type: 3,
-		});
+		if(credits >= unit3Cost && progressBarProgress.style.width === '0px'){
+			socket.emit('procudeUnit',{
+				gameId: gameId,
+				playerId: selfId,
+				type: 3,
+				credits: 750,
+			});
+			credits -= 750;
+		}
 	}
 	
 	unit4Button.onclick = function(){
-		socket.emit('procudeUnit',{
-			gameId: gameId,
-			playerId: selfId,
-			type: 4,
-		});
+		if(credits >= unit4Cost && progressBarProgress.style.width === '0px'){
+			socket.emit('procudeUnit',{
+				gameId: gameId,
+				playerId: selfId,
+				type: 4,
+				credits: 1500,
+			});
+			credits -= 1500;
+		}
 	}
 	
 	
@@ -362,19 +388,28 @@
 		var player2Color = '#E3E152';
 		gameCanvas.clearRect(0,0,1200,560);
 		
-		gameCanvas.fillStyle = player1Color;
-		gameCanvas.beginPath();
-		gameCanvas.arc(data.player1Base.x,data.player1Base.y,10,0,2*Math.PI);
-		gameCanvas.fill();
-		
-		gameCanvas.fillStyle = player2Color;
-		gameCanvas.beginPath();
-		gameCanvas.arc(data.player2Base.x,data.player2Base.y,10,0,2*Math.PI);
-		gameCanvas.fill();
+		// player 1 base
+		gameCanvas.save();
+		gameCanvas.translate(data.player1Base.x,data.player1Base.y);
+		gameCanvas.rotate(data.player1Base.spin * Math.PI/180);
+		gameCanvas.drawImage(Img.buildings,0,0,32,32,-16,-16,32,32);
+		gameCanvas.restore();
+		// player 2 base
+		gameCanvas.save();
+		gameCanvas.translate(data.player2Base.x,data.player2Base.y);
+		gameCanvas.rotate(data.player2Base.spin * Math.PI/180);
+		gameCanvas.drawImage(Img.buildings,32,0,32,32,-16,-16,32,32);
+		gameCanvas.restore();
 		
 		gameCanvas.fillStyle = '#cccccc';
 		for (var i in data.mines){
 			var mine = data.mines[i];
+			gameCanvas.save();
+			gameCanvas.translate(mine.x,mine.y);
+			gameCanvas.rotate(mine.spin * Math.PI/180);
+			gameCanvas.drawImage(Img.buildings,65,1,30,30,-15,-15,30,30);
+			gameCanvas.restore();
+			
 			gameCanvas.beginPath();
 			gameCanvas.arc(mine.x,mine.y,6,0,2*Math.PI);
 			gameCanvas.fill();
@@ -383,29 +418,37 @@
 		gameCanvas.fillStyle = '#52E365';
 		for (var i in data.player1Units){
 			var unit = data.player1Units[i];
+			gameCanvas.save();
+			gameCanvas.translate(unit.x,unit.y);
+			gameCanvas.rotate(unit.angle + Math.PI/2);
 			if (unit.type === 1){
-				gameCanvas.drawImage(Img.units,1,15,5,9,unit.x-3,unit.y-5,5,9);
+				gameCanvas.drawImage(Img.units,1,15,5,9,-3,-5,5,9);
 			} else if(unit.type === 2) {
-				gameCanvas.drawImage(Img.units,8,14,8,10,unit.x-5,unit.y-5,8,10);
+				gameCanvas.drawImage(Img.units,8,14,8,10,-5,-5,8,10);
 			} else if(unit.type === 3) {
-				gameCanvas.drawImage(Img.units,18,8,9,16,unit.x-5,unit.y-8,9,16);
+				gameCanvas.drawImage(Img.units,18,8,9,16,-5,-8,9,16);
 			} else if(unit.type === 4) {
-				gameCanvas.drawImage(Img.units,29,1,10,23,unit.x-5,unit.y-12,10,23);
+				gameCanvas.drawImage(Img.units,29,1,10,23,-5,-12,10,23);
 			}
+			gameCanvas.restore();
 		}
 		
 		gameCanvas.fillStyle = '#E3E152';
 		for (var i in data.player2Units){
 			var unit = data.player2Units[i];
+			gameCanvas.save();
+			gameCanvas.translate(unit.x,unit.y);
+			gameCanvas.rotate(unit.angle + Math.PI/2);
 			if (unit.type === 1){
-				gameCanvas.drawImage(Img.units,1,40,5,9,unit.x-3,unit.y-5,5,9);
+				gameCanvas.drawImage(Img.units,1,40,5,9,-3,-5,5,9);
 			} else if(unit.type === 2) {
-				gameCanvas.drawImage(Img.units,8,39,8,10,unit.x-5,unit.y-5,8,10);
+				gameCanvas.drawImage(Img.units,8,39,8,10,-5,-5,8,10);
 			} else if(unit.type === 3) {
-				gameCanvas.drawImage(Img.units,18,33,9,16,unit.x-5,unit.y-8,9,16);
+				gameCanvas.drawImage(Img.units,18,33,9,16,-5,-8,9,16);
 			} else if(unit.type === 4) {
-				gameCanvas.drawImage(Img.units,29,26,10,23,unit.x-5,unit.y-12,10,23);
+				gameCanvas.drawImage(Img.units,29,26,10,23,-5,-12,10,23);
 			}
+			gameCanvas.restore();
 		}
 		
 		
@@ -413,8 +456,10 @@
 		
 	});
 	
-	socket.on('creditsUpdate',function(data){
+	socket.on('hudUpdate',function(data){
+		credits = data.credits;
 		creditsDiv.innerHTML = 'Credits: $' + data.credits;
+		progressBarProgress.style.width = data.productionProgress;
 	});
 	
 

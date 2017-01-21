@@ -21,25 +21,6 @@ var Player = function(id){
 		isInLobby:false,
 		gameId:"",
 		playing:false,
-		
-		x:250,
-		y:250,
-		number:"" + Math.floor(10*Math.random()),
-		pressingRight:false,
-		pressingLeft:false,
-		pressingUp:false,
-		pressingDown:false,
-		maxSpd:10,
-	}
-	self.updatePosition = function(){
-		if(self.pressingRight)
-			self.x += self.maxSpd;
-		if(self.pressingLeft)
-			self.x -= self.maxSpd;
-		if(self.pressingUp)
-			self.y -= self.maxSpd;
-		if(self.pressingDown)
-			self.y += self.maxSpd;
 	}
 	return self;
 }
@@ -53,50 +34,179 @@ var Game = function(id){
 		started:false,
 		player1Credits: 5000,
 		player2Credits: 5000,
-		player1Base: {x: 100, y: 284, hp: 100,},
-		player2Base: {x: 1100, y: 284, hp: 100,},
+		player1Base: {x: 100, y: 284, hp: 100, spin: Math.random()*360,},
+		player2Base: {x: 1100, y: 284, hp: 100, spin: Math.random()*360,},
 		mines: [
-			{x: 50, y: 84, owner: 0,},
-			{x: 50, y: 484, owner: 0,},
-			{x: 1150, y: 84, owner: 0,},
-			{x: 1150, y: 484, owner: 0,},
-			{x: 600, y: 184, owner: 0,},
-			{x: 600, y: 384, owner: 0,},
-			{x: 450, y: 284, owner: 0,},
-			{x: 750, y: 284, owner: 0,},
+			{x: 50, y: 84, owner: 0, spin: Math.random()*360,},
+			{x: 50, y: 484, owner: 0, spin: Math.random()*360,},
+			{x: 1150, y: 84, owner: 0, spin: Math.random()*360,},
+			{x: 1150, y: 484, owner: 0, spin: Math.random()*360,},
+			{x: 600, y: 184, owner: 0, spin: Math.random()*360,},
+			{x: 600, y: 384, owner: 0, spin: Math.random()*360,},
+			{x: 450, y: 284, owner: 0, spin: Math.random()*360,},
+			{x: 750, y: 284, owner: 0, spin: Math.random()*360,},
 		],
+		player1ProductionProgress: 0,
+		player2ProductionProgress: 0,
+		player1ProductionType: 0,
+		player1ProductionType: 0,
 		player1Units: {},
 		player2Units: {},
-		
+
 	}
-	self.produceUnit = function(whichPlayer,type){
+	
+	self.spinBuildings = function(){
+		self.player1Base.spin += 1;
+		if (self.player1Base.spin >= 360) self.player1Base.spin = 0;
+		self.player2Base.spin += 1;
+		if (self.player2Base.spin >= 360) self.player2Base.spin = 0;
+		for (var i in self.mines){
+			var mine = self.mines[i];
+			mine.spin += 0.5;
+			if (mine.spin >= 360) mine.spin = 0;
+		}
+	}
+	
+	self.startProducingUnit = function(whichPlayer,type){
+		if(whichPlayer === 1){
+			if (type === 1){
+				self.player1ProductionProgress = 5;
+			} else if (type === 2){
+				self.player1ProductionProgress = 10;
+			} else if (type === 3){
+				self.player1ProductionProgress = 2;
+			} else if (type === 4){
+				self.player1ProductionProgress = 1;
+			}
+			self.player1ProductionType = type;
+		} else {
+			if (type === 1){
+				self.player2ProductionProgress = 5;
+			} else if (type === 2){
+				self.player2ProductionProgress = 10;
+			} else if (type === 3){
+				self.player2ProductionProgress = 2;
+			} else if (type === 4){
+				self.player2ProductionProgress = 1;
+			}
+			self.player2ProductionType = type;
+		}
+	}
+	
+	self.continueProducingUnit = function(){
+		// continuing production for player 1 - if was started
+		if(self.player1ProductionProgress !== 0){
+			if (self.player1ProductionType === 1){
+				self.player1ProductionProgress += 5;
+			} else if (self.player1ProductionType === 2){
+				self.player1ProductionProgress += 10;
+			} else if (self.player1ProductionType === 3){
+				self.player1ProductionProgress += 2;
+			} else if (self.player1ProductionType === 4){
+				self.player1ProductionProgress += 1;
+			}
+			// add unit if finished
+			if(self.player1ProductionProgress >= 100){
+				self.finishProducingUnit(1, self.player1ProductionType);
+				self.player1ProductionProgress = 0;
+				self.player1ProductionType = 0;
+			}
+		}
+		// continuing production for player 2 - if was started
+		if(self.player2ProductionProgress !== 0){
+			if (self.player2ProductionType === 1){
+				self.player2ProductionProgress += 5;
+			} else if (self.player2ProductionType === 2){
+				self.player2ProductionProgress += 10;
+			} else if (self.player2ProductionType === 3){
+				self.player2ProductionProgress += 2;
+			} else if (self.player2ProductionType === 4){
+				self.player2ProductionProgress += 1;
+			}
+			// add unit if finished
+			if(self.player2ProductionProgress >= 100){
+				self.finishProducingUnit(2, self.player2ProductionType);
+				self.player2ProductionProgress = 0;
+				self.player2ProductionType = 0;
+			}
+		}
+	}
+	
+	self.finishProducingUnit = function(whichPlayer,type){
 		var id = Math.random();
 		var x = 0;
 		var y = 0;
+		var destinationX = 0;
+		var destinationY = 0;
 		if (whichPlayer === 1) {
-			x = self.player1Base.x + Math.random()*100 - 50;
-			y = self.player1Base.y + Math.random()*100 - 50;
+			x = self.player1Base.x;
+			y = self.player1Base.y;
+			destinationX = self.player1Base.x + Math.random()*100 - 50;
+			destinationY = self.player1Base.y + Math.random()*100 - 50;
 		} else {
-			x = self.player2Base.x + Math.random()*100 - 50;
-			y = self.player2Base.y + Math.random()*100 - 50;
+			x = self.player2Base.x;
+			y = self.player2Base.y;
+			destinationX = self.player2Base.x + Math.random()*100 - 50;
+			destinationY = self.player2Base.y + Math.random()*100 - 50;
 		}
-		var unit = Unit(id,type,x,y);
+		var unit = Unit(id,type,x,y,destinationX,destinationY);
+		unit.initUnit(type);
 		if (whichPlayer === 1) {
 			self.player1Units[id] = unit;
 		} else {
 			self.player2Units[id] = unit;
 		}
 	}
+	
+	self.updateUnits = function(){
+		for (var i in self.player1Units){
+			var unit = self.player1Units[i];
+			unit.moveUnit();
+		}
+		for (var i in self.player2Units){
+			var unit = self.player2Units[i];
+			unit.moveUnit();
+		}
+	}
+	
 	return self;
 }
 
 
-var Unit = function(id,type,x,y){
+var Unit = function(id,type,x,y,destinationX,destinationY){
 	var self = {
 		id:id,
 		type: type,
 		x:x,
 		y:y,
+		destinationX: destinationX,
+		destinationY: destinationY,
+		angle: 0,
+		speed: 0,
+		hp: 0,
+		range: 0,
+	}
+	
+	self.initUnit = function(type){
+		if (type === 1){
+			self.speed = 4;
+		} else if (type === 2){
+			self.speed = 2.5;
+		} else if (type === 3){
+			self.speed = 2;
+		} else if (type === 4){
+			self.speed = 1.5;
+		}
+	}
+	
+	self.moveUnit = function(){
+		var distanceToDestination = Math.sqrt( (self.x-self.destinationX)*(self.x-self.destinationX) + (self.y-self.destinationY)*(self.y-self.destinationY) );
+		if (distanceToDestination > 3){
+			var angleInRadians = Math.atan2(self.destinationY - self.y, self.destinationX - self.x);
+			self.angle = angleInRadians;
+			self.x += Math.cos(angleInRadians) * self.speed;
+			self.y += Math.sin(angleInRadians) * self.speed;
+		}
 	}
 	return self;
 }
@@ -279,10 +389,12 @@ io.sockets.on('connection', function(socket){
 		var whichPlayer = 0;
 		if(game.player1Id === data.playerId){
 			whichPlayer = 1;
+			game.player1Credits -= data.credits;
 		} else {
 			whichPlayer = 2;
+			game.player2Credits -= data.credits;
 		}
-		game.produceUnit(whichPlayer, data.type);
+		game.startProducingUnit(whichPlayer, data.type);
 	});
 	
 	
@@ -290,37 +402,12 @@ io.sockets.on('connection', function(socket){
 	
 	
 	
-	
-	socket.on('keyPress',function(data){
-		if(data.inputId === 'left')
-			player.pressingLeft = data.state;
-		else if(data.inputId === 'right')
-			player.pressingRight = data.state;
-		else if(data.inputId === 'up')
-			player.pressingUp = data.state;
-		else if(data.inputId === 'down')
-			player.pressingDown = data.state;
-	});
 	
 });
 
-setInterval(function(){
-	var pack = [];
-	for(var i in PLAYER_LIST){
-		var player = PLAYER_LIST[i];
-		player.updatePosition();
-		pack.push({
-			x:player.x,
-			y:player.y,
-			number:player.number
-		});	
-	}
-	for(var i in SOCKET_LIST){
-		var socket = SOCKET_LIST[i];
-		socket.emit('newPositions',pack);
-	}
-},1000/25);
 
+
+// --- methods ---
 
 var updateLobbyPlayersList = function(){
 	var lobbyPlayersList = [];
@@ -379,6 +466,12 @@ setInterval(function(){
 	for(var i in GAME_LIST){
 		var game = GAME_LIST[i];
 		if (game.started){
+			// update game state on server
+			game.continueProducingUnit();
+			game.spinBuildings();
+			game.updateUnits();
+			
+			// send updates to client
 			var updatePack = [];
 			updatePack = {
 				player1Base: game.player1Base,
@@ -389,32 +482,10 @@ setInterval(function(){
 			};
 			
 			SOCKET_LIST[game.player1Id].emit('gameUpdate', updatePack);
-			SOCKET_LIST[game.player1Id].emit('creditsUpdate', {credits:game.player1Credits});
+			SOCKET_LIST[game.player1Id].emit('hudUpdate', {credits:game.player1Credits, productionProgress: game.player1ProductionProgress});
 			
 			SOCKET_LIST[game.player2Id].emit('gameUpdate', updatePack);
-			SOCKET_LIST[game.player2Id].emit('creditsUpdate', {credits:game.player1Credits});
+			SOCKET_LIST[game.player2Id].emit('hudUpdate', {credits:game.player2Credits, productionProgress: game.player2ProductionProgress});
 		}
 	}
-
-
-
-
-
-
-	/*
-	var pack = [];
-	for(var i in PLAYER_LIST){
-		var player = PLAYER_LIST[i];
-		player.updatePosition();
-		pack.push({
-			x:player.x,
-			y:player.y,
-			number:player.number
-		});	
-	}
-	for(var i in SOCKET_LIST){
-		var socket = SOCKET_LIST[i];
-		socket.emit('gameUpdate',pack);
-	}
-	*/
-},1000/25);
+},40); // 25 FPS
