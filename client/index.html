@@ -97,6 +97,23 @@
 	var unit2Cost = 250;
 	var unit3Cost = 750;
 	var unit4Cost = 1500;
+	
+	var mouseStartX = 0;
+	var mouseStartY = 0;
+	var mouseEndX = 0;
+	var mouseEndY = 0;
+	var isMouseDown = false;
+	var topLeftX = 0;
+	var topLeftY = 0;
+	var bottomRightX = 0;
+	var bottomRightY = 0;
+	
+	var myBase = null;
+	var enemyBase = null;
+	var mines = null;
+	var myUnits = null;
+	var enemyUnits = null;
+	
 	window.onbeforeunload = function() {
 		socket.disconnect(); 
 	}
@@ -384,9 +401,22 @@
 	});
 	
 	socket.on('gameUpdate',function(data){
+		mines = data.mines;
+		if(selfId === data.player1Id){
+			myBase = data.player1Base;
+			enemyBase = data.player2Base;
+			myUnits = data.player1Units;
+			enemyUnits = data.player2Units;
+		} else {
+			myBase = data.player2Base;
+			enemyBase = data.player1Base;
+			myUnits = data.player2Units;
+			enemyUnits = data.player1Units;
+		}
+	
 		var player1Color = '#52E365';
 		var player2Color = '#E3E152';
-		gameCanvas.clearRect(0,0,1200,560);
+		gameCanvas.clearRect(0,0,1200,568);
 		
 		// player 1 base
 		gameCanvas.save();
@@ -431,6 +461,10 @@
 				gameCanvas.drawImage(Img.units,29,1,10,23,-5,-12,10,23);
 			}
 			gameCanvas.restore();
+			if (unit.selected === true && selfId === data.player1Id){
+				gameCanvas.strokeStyle = "#cccccc";
+				gameCanvas.strokeRect(unit.x - 10, unit.y - 10, 20, 20);
+			}
 		}
 		
 		gameCanvas.fillStyle = '#E3E152';
@@ -449,9 +483,29 @@
 				gameCanvas.drawImage(Img.units,29,26,10,23,-5,-12,10,23);
 			}
 			gameCanvas.restore();
+			if (unit.selected === true && selfId === data.player2Id){
+				gameCanvas.strokeStyle = "#cccccc";
+				gameCanvas.strokeRect(unit.x - 10, unit.y - 10, 20, 20);
+			}
 		}
 		
-		
+		// selection box
+		if (isMouseDown == true) {
+			gameCanvas.strokeStyle = "#cccccc";
+			gameCanvas.strokeRect(topLeftX, topLeftY, bottomRightX-topLeftX, bottomRightY-topLeftY);
+		 } else {
+			for (var i in mines){
+				var mine = mines[i];
+				if (mouseEndX > mine.x-10 &&
+					mouseEndX < mine.x+10 &&
+					mouseEndY > mine.y-10 &&
+					mouseEndY < mine.y+10
+				){
+					gameCanvas.strokeStyle = "#cccccc";
+					gameCanvas.strokeRect(mine.x - 10, mine.y - 10, 20, 20);
+				}
+			}
+		 }
 		
 		
 	});
@@ -464,6 +518,73 @@
 	
 
 	
+	document.getElementById("gameCanvas").onmousedown = function(e){
+		mouseStartX = e.pageX - gameDiv.offsetLeft;
+		mouseStartY = e.pageY - gameDiv.offsetTop - 32;
+		isMouseDown = true;
+		//alert("X: " + mouseStartX + " | Y: " + mouseStartY);
+	}
+	
+	document.getElementById("gameCanvas").onmouseup = function(e){
+		if (mouseStartX === mouseEndX && mouseStartY === mouseEndY && e.button === 0){
+			socket.emit('moveUnits', {
+				gameId: gameId,
+				playerId: selfId,
+				destinationX: mouseEndX,
+				destinationY: mouseEndY,
+			});
+		} else {
+			socket.emit('selectionBox', {
+				gameId: gameId,
+				playerId: selfId,
+				topLeftX: topLeftX, 
+				topLeftY: topLeftY, 
+				bottomRightX: bottomRightX, 
+				bottomRightY: bottomRightY
+			});
+		}
+		isMouseDown = false;
+		topLeftX = 0;
+		topLeftY = 0;
+		bottomRightX = 0;
+		bottomRightY = 0;
+	}
+	
+	document.getElementById("gameCanvas").onmousemove = function(e){
+		mouseEndX = e.pageX - gameDiv.offsetLeft;
+		mouseEndY = e.pageY - gameDiv.offsetTop - 32;
+		
+		if (isMouseDown === true){
+			topLeftX = 0;
+			topLeftY = 0;
+			bottomRightX = 0;
+			bottomRightY = 0;
+			
+			if (mouseEndX <= mouseStartX) {
+				topLeftX = mouseEndX;
+				bottomRightX = mouseStartX;
+			}
+			else {
+				topLeftX = mouseStartX;
+				bottomRightX = mouseEndX;
+			}
+			if (mouseEndY <= mouseStartY) {
+				topLeftY = mouseEndY;
+				bottomRightY = mouseStartY;
+			}
+			else {
+				topLeftY = mouseStartY;
+				bottomRightY = mouseEndY;
+			}
+		} else {
+			// unit hp bars, cursor changing
+		}
+	}
+	
+	document.getElementById("gameCanvas").oncontextmenu = function(e){
+		e.preventDefault();
+		socket.emit('rightClick',{gameId:gameId, playerId: selfId});
+	}
 	
 	
 </script>

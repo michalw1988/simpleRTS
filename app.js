@@ -181,6 +181,7 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 		y:y,
 		destinationX: destinationX,
 		destinationY: destinationY,
+		selected: false,
 		angle: 0,
 		speed: 0,
 		hp: 0,
@@ -397,8 +398,58 @@ io.sockets.on('connection', function(socket){
 		game.startProducingUnit(whichPlayer, data.type);
 	});
 	
+	socket.on('selectionBox',function(data){
+		var game = GAME_LIST[data.gameId];
+		var unitList = null;
+		if (data.playerId === game.player1Id){ // player 1 sent selection box
+			unitList = game.player1Units;
+		} else { // player 2 sent selection box
+			unitList = game.player2Units;
+		}
+		for (var i in unitList){
+			var unit = unitList[i];
+			if (unit.x > data.topLeftX && 
+				unit.x < data.bottomRightX &&
+				unit.y > data.topLeftY &&
+				unit.y < data.bottomRightY
+			){
+				unit.selected = true;
+			} else {
+				unit.selected = false;
+			}
+		}
+	});
 	
+	socket.on('moveUnits',function(data){
+		var game = GAME_LIST[data.gameId];
+		var unitList = null;
+		if (data.playerId === game.player1Id){ // player 1 sent right click
+			unitList = game.player1Units;
+		} else { // player 2 sent right click
+			unitList = game.player2Units;
+		}
+		for (var i in unitList){
+			var unit = unitList[i];
+			if (unit.selected === true){
+				unit.destinationX = data.destinationX;
+				unit.destinationY = data.destinationY;
+			}
+		}
+	});
 	
+	socket.on('rightClick',function(data){
+		var game = GAME_LIST[data.gameId];
+		var unitList = null;
+		if (data.playerId === game.player1Id){ // player 1 sent right click
+			unitList = game.player1Units;
+		} else { // player 2 sent right click
+			unitList = game.player2Units;
+		}
+		for (var i in unitList){
+			var unit = unitList[i];
+			unit.selected = false;
+		}
+	});
 	
 	
 	
@@ -474,6 +525,8 @@ setInterval(function(){
 			// send updates to client
 			var updatePack = [];
 			updatePack = {
+				player1Id: game.player1Id,
+				player2Id: game.player2Id,
 				player1Base: game.player1Base,
 				player2Base: game.player2Base,
 				mines: game.mines,
