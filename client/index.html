@@ -114,6 +114,9 @@
 	var myUnits = null;
 	var enemyUnits = null;
 	
+	var isBattleUnitSelected = false;
+	var isEngineerUnitSelected = false;
+	
 	window.onbeforeunload = function() {
 		socket.disconnect(); 
 	}
@@ -159,6 +162,15 @@
 	Img.units.src = '/client/img/units.png';
 	Img.buildings = new Image();
 	Img.buildings.src = '/client/img/buildings.png';
+	Img.neutralCursor = new Image();
+	Img.neutralCursor.src = '/client/img/neutral.png';
+	Img.moveCursor = new Image();
+	Img.moveCursor.src = '/client/img/move.png';
+	Img.captureCursor = new Image();
+	Img.captureCursor.src = '/client/img/capture.png';
+	Img.attackCursor = new Image();
+	Img.attackCursor.src = '/client/img/attack.png';
+	var whichCursor = 'neutral';
 	
 	
 	// login screen
@@ -463,7 +475,26 @@
 			gameCanvas.restore();
 			if (unit.selected === true && selfId === data.player1Id){
 				gameCanvas.strokeStyle = "#cccccc";
-				gameCanvas.strokeRect(unit.x - 10, unit.y - 10, 20, 20);
+				gameCanvas.beginPath();
+				gameCanvas.moveTo(unit.x-10, unit.y-7);
+				gameCanvas.lineTo(unit.x-10, unit.y-10);
+				gameCanvas.lineTo(unit.x-7, unit.y-10);
+				gameCanvas.stroke();
+				gameCanvas.beginPath();
+				gameCanvas.moveTo(unit.x+10, unit.y-7);
+				gameCanvas.lineTo(unit.x+10, unit.y-10);
+				gameCanvas.lineTo(unit.x+7, unit.y-10);
+				gameCanvas.stroke();
+				gameCanvas.beginPath();
+				gameCanvas.moveTo(unit.x-10, unit.y+7);
+				gameCanvas.lineTo(unit.x-10, unit.y+10);
+				gameCanvas.lineTo(unit.x-7, unit.y+10);
+				gameCanvas.stroke();
+				gameCanvas.beginPath();
+				gameCanvas.moveTo(unit.x+10, unit.y+7);
+				gameCanvas.lineTo(unit.x+10, unit.y+10);
+				gameCanvas.lineTo(unit.x+7, unit.y+10);
+				gameCanvas.stroke();
 			}
 		}
 		
@@ -485,15 +516,51 @@
 			gameCanvas.restore();
 			if (unit.selected === true && selfId === data.player2Id){
 				gameCanvas.strokeStyle = "#cccccc";
-				gameCanvas.strokeRect(unit.x - 10, unit.y - 10, 20, 20);
+				gameCanvas.beginPath();
+				gameCanvas.moveTo(unit.x-10, unit.y-7);
+				gameCanvas.lineTo(unit.x-10, unit.y-10);
+				gameCanvas.lineTo(unit.x-7, unit.y-10);
+				gameCanvas.stroke();
+				gameCanvas.beginPath();
+				gameCanvas.moveTo(unit.x+10, unit.y-7);
+				gameCanvas.lineTo(unit.x+10, unit.y-10);
+				gameCanvas.lineTo(unit.x+7, unit.y-10);
+				gameCanvas.stroke();
+				gameCanvas.beginPath();
+				gameCanvas.moveTo(unit.x-10, unit.y+7);
+				gameCanvas.lineTo(unit.x-10, unit.y+10);
+				gameCanvas.lineTo(unit.x-7, unit.y+10);
+				gameCanvas.stroke();
+				gameCanvas.beginPath();
+				gameCanvas.moveTo(unit.x+10, unit.y+7);
+				gameCanvas.lineTo(unit.x+10, unit.y+10);
+				gameCanvas.lineTo(unit.x+7, unit.y+10);
+				gameCanvas.stroke();
 			}
 		}
 		
+		isBattleUnitSelected = false;
+		isEngineerUnitSelected = false;
+		for (var i in myUnits){
+			var unit = myUnits[i];
+			if (unit.selected === true && unit.type === 1){
+				isEngineerUnitSelected = true;
+			} else if (unit.selected && unit.type !== 1){
+				isBattleUnitSelected = true;
+			}
+		}
+		
+		whichCursor = 'neutral';
+		if (isBattleUnitSelected || isEngineerUnitSelected){
+			whichCursor = 'move';
+		}
+		
 		// selection box
-		if (isMouseDown == true) {
+		if (isMouseDown == true && mouseStartX !== mouseEndX && mouseStartY !== mouseEndY) {
 			gameCanvas.strokeStyle = "#cccccc";
 			gameCanvas.strokeRect(topLeftX, topLeftY, bottomRightX-topLeftX, bottomRightY-topLeftY);
-		 } else {
+		} else { 
+		// cursor changing
 			for (var i in mines){
 				var mine = mines[i];
 				if (mouseEndX > mine.x-10 &&
@@ -501,11 +568,59 @@
 					mouseEndY > mine.y-10 &&
 					mouseEndY < mine.y+10
 				){
-					gameCanvas.strokeStyle = "#cccccc";
-					gameCanvas.strokeRect(mine.x - 10, mine.y - 10, 20, 20);
+					if(isEngineerUnitSelected){
+						whichCursor = 'capture';
+					}
 				}
 			}
-		 }
+			if (mouseEndX > enemyBase.x-20 &&
+				mouseEndX < enemyBase.x+20 &&
+				mouseEndY > enemyBase.y-20 &&
+				mouseEndY < enemyBase.y+20
+			){
+				if(isBattleUnitSelected){
+					whichCursor = 'attack';
+				}
+				gameCanvas.fillStyle = '#cccccc';
+				gameCanvas.fillRect(enemyBase.x-15, enemyBase.y-22, 30, 4);
+				gameCanvas.fillStyle = '#0000ff';
+				gameCanvas.fillRect(enemyBase.x-15, enemyBase.y-22, 30*enemyBase.hp/enemyBase.hpMax, 4);
+			}
+			if (mouseEndX > myBase.x-20 &&
+				mouseEndX < myBase.x+20 &&
+				mouseEndY > myBase.y-20 &&
+				mouseEndY < myBase.y+20
+			){
+				gameCanvas.fillStyle = '#cccccc';
+				gameCanvas.fillRect(myBase.x-15, myBase.y-22, 30, 4);
+				gameCanvas.fillStyle = '#0000ff';
+				gameCanvas.fillRect(myBase.x-15, myBase.y-22, 30*myBase.hp/myBase.hpMax, 4);
+			}
+			for (var i in enemyUnits){
+				var unit = enemyUnits[i];
+				if (mouseEndX > unit.x-10 &&
+					mouseEndX < unit.x+10 &&
+					mouseEndY > unit.y-10 &&
+					mouseEndY < unit.y+10
+				){
+					if(isBattleUnitSelected){
+						whichCursor = 'attack';
+					}
+				}
+			}
+		}
+		
+		// cursor
+		if (whichCursor === 'neutral'){
+			document.getElementById("gameCanvas").style.cursor = "url('/client/img/neutral.png') 9 9, auto";
+		} else if (whichCursor === 'move'){
+			document.getElementById("gameCanvas").style.cursor = "url('/client/img/move.png') 9 9, auto";
+		} else if (whichCursor === 'capture'){
+			document.getElementById("gameCanvas").style.cursor = "url('/client/img/capture.png') 9 9, auto";
+		} else if (whichCursor === 'attack'){
+			document.getElementById("gameCanvas").style.cursor = "url('/client/img/attack.png') 9 9, auto";
+		}
+		
 		
 		
 	});
@@ -577,7 +692,7 @@
 				bottomRightY = mouseEndY;
 			}
 		} else {
-			// unit hp bars, cursor changing
+			// unit & bases hp bars
 		}
 	}
 	

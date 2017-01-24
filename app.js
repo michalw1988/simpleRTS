@@ -34,8 +34,8 @@ var Game = function(id){
 		started:false,
 		player1Credits: 5000,
 		player2Credits: 5000,
-		player1Base: {x: 100, y: 284, hp: 100, spin: Math.random()*360,},
-		player2Base: {x: 1100, y: 284, hp: 100, spin: Math.random()*360,},
+		player1Base: {x: 100, y: 284, hp: 500, hpMax: 1000, spin: Math.random()*360,},
+		player2Base: {x: 1100, y: 284, hp: 500, hpMax: 1000, spin: Math.random()*360,},
 		mines: [
 			{x: 50, y: 84, owner: 0, spin: Math.random()*360,},
 			{x: 50, y: 484, owner: 0, spin: Math.random()*360,},
@@ -414,6 +414,7 @@ io.sockets.on('connection', function(socket){
 				unit.y < data.bottomRightY
 			){
 				unit.selected = true;
+				
 			} else {
 				unit.selected = false;
 			}
