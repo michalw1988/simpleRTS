@@ -460,6 +460,26 @@
 		gameCanvas.fillStyle = '#52E365';
 		for (var i in data.player1Units){
 			var unit = data.player1Units[i];
+			
+			// line to destination
+			if (unit.selected === true && selfId === data.player1Id){
+				if(unit.activeOrderType === 'move'){
+					gameCanvas.fillStyle = '#00a2e8';
+					gameCanvas.strokeStyle = '#00a2e8';
+				} else if(unit.activeOrderType === 'capture'){
+					gameCanvas.fillStyle = '#fff200';
+					gameCanvas.strokeStyle = '#fff200';
+				} else if(unit.activeOrderType === 'attack'){
+					gameCanvas.fillStyle = '#ff0000';
+					gameCanvas.strokeStyle = '#ff0000';
+				}
+				gameCanvas.beginPath();
+				gameCanvas.moveTo(unit.x, unit.y);
+				gameCanvas.lineTo(unit.destinationX, unit.destinationY);
+				gameCanvas.stroke();
+				gameCanvas.fillRect(unit.destinationX-1.5, unit.destinationY-1.5, 3, 3);
+			}
+			
 			gameCanvas.save();
 			gameCanvas.translate(unit.x,unit.y);
 			gameCanvas.rotate(unit.angle + Math.PI/2);
@@ -495,12 +515,37 @@
 				gameCanvas.lineTo(unit.x+10, unit.y+10);
 				gameCanvas.lineTo(unit.x+7, unit.y+10);
 				gameCanvas.stroke();
+				
+				gameCanvas.fillStyle = '#cccccc';
+				gameCanvas.fillRect(unit.x-10, unit.y-14, 20, 3);
+				gameCanvas.fillStyle = '#0000ff';
+				gameCanvas.fillRect(unit.x-10, unit.y-14, 20*unit.hp/unit.hpMax, 3);
 			}
 		}
 		
 		gameCanvas.fillStyle = '#E3E152';
 		for (var i in data.player2Units){
 			var unit = data.player2Units[i];
+			
+			// line to destination
+			if (unit.selected === true && selfId === data.player2Id){			
+				if(unit.activeOrderType === 'move'){
+					gameCanvas.fillStyle = '#00a2e8';
+					gameCanvas.strokeStyle = '#00a2e8';
+				} else if(unit.activeOrderType === 'capture'){
+					gameCanvas.fillStyle = '#fff200';
+					gameCanvas.strokeStyle = '#fff200';
+				} else if(unit.activeOrderType === 'attack'){
+					gameCanvas.fillStyle = '#ff0000';
+					gameCanvas.strokeStyle = '#ff0000';
+				}
+				gameCanvas.beginPath();
+				gameCanvas.moveTo(unit.x, unit.y);
+				gameCanvas.lineTo(unit.destinationX, unit.destinationY);
+				gameCanvas.stroke();
+				gameCanvas.fillRect(unit.destinationX-1.5, unit.destinationY-1.5, 3, 3);
+			}
+			
 			gameCanvas.save();
 			gameCanvas.translate(unit.x,unit.y);
 			gameCanvas.rotate(unit.angle + Math.PI/2);
@@ -536,6 +581,11 @@
 				gameCanvas.lineTo(unit.x+10, unit.y+10);
 				gameCanvas.lineTo(unit.x+7, unit.y+10);
 				gameCanvas.stroke();
+				
+				gameCanvas.fillStyle = '#cccccc';
+				gameCanvas.fillRect(unit.x-10, unit.y-14, 20, 3);
+				gameCanvas.fillStyle = '#0000ff';
+				gameCanvas.fillRect(unit.x-10, unit.y-14, 20*unit.hp/unit.hpMax, 3);
 			}
 		}
 		
@@ -560,7 +610,7 @@
 			gameCanvas.strokeStyle = "#cccccc";
 			gameCanvas.strokeRect(topLeftX, topLeftY, bottomRightX-topLeftX, bottomRightY-topLeftY);
 		} else { 
-		// cursor changing
+		// cursor changing and/or hp bar displaying
 			for (var i in mines){
 				var mine = mines[i];
 				if (mouseEndX > mine.x-10 &&
@@ -606,6 +656,23 @@
 					if(isBattleUnitSelected){
 						whichCursor = 'attack';
 					}
+					gameCanvas.fillStyle = '#cccccc';
+					gameCanvas.fillRect(unit.x-10, unit.y-14, 20, 3);
+					gameCanvas.fillStyle = '#0000ff';
+					gameCanvas.fillRect(unit.x-10, unit.y-14, 20*unit.hp/unit.hpMax, 3);
+				}
+			}
+			for (var i in myUnits){
+				var unit = myUnits[i];
+				if (mouseEndX > unit.x-10 &&
+					mouseEndX < unit.x+10 &&
+					mouseEndY > unit.y-10 &&
+					mouseEndY < unit.y+10
+				){
+					gameCanvas.fillStyle = '#cccccc';
+					gameCanvas.fillRect(unit.x-10, unit.y-14, 20, 3);
+					gameCanvas.fillStyle = '#0000ff';
+					gameCanvas.fillRect(unit.x-10, unit.y-14, 20*unit.hp/unit.hpMax, 3);
 				}
 			}
 		}
@@ -641,13 +708,61 @@
 	}
 	
 	document.getElementById("gameCanvas").onmouseup = function(e){
-		if (mouseStartX === mouseEndX && mouseStartY === mouseEndY && e.button === 0){
-			socket.emit('moveUnits', {
-				gameId: gameId,
-				playerId: selfId,
-				destinationX: mouseEndX,
-				destinationY: mouseEndY,
-			});
+		var mouseXAbs = Math.abs(mouseStartX - mouseEndX);
+		var mouseYAbs = Math.abs(mouseStartY - mouseEndY);
+		//if (mouseStartX === mouseEndX && mouseStartY === mouseEndY && e.button === 0){
+		if (mouseXAbs < 20 && mouseYAbs < 20 && e.button === 0){
+			// if any unit selected then send / capture / attack command for selected group
+			if (isBattleUnitSelected || isEngineerUnitSelected){
+				var actionType = 'move';
+				var objectId = '';
+				for (var i in mines){
+					var mine = mines[i];
+					if (mouseEndX > mine.x-10 &&
+						mouseEndX < mine.x+10 &&
+						mouseEndY > mine.y-10 &&
+						mouseEndY < mine.y+10
+					){
+						if(isEngineerUnitSelected){
+							actionType = 'capture';
+							objectId = mine.id;
+						}
+					}
+				}
+				if (mouseEndX > enemyBase.x-20 &&
+					mouseEndX < enemyBase.x+20 &&
+					mouseEndY > enemyBase.y-20 &&
+					mouseEndY < enemyBase.y+20
+				){
+					if(isBattleUnitSelected){
+						actionType = 'attackBase';
+						objectId = 'base';
+					}
+				}
+				for (var i in enemyUnits){
+					var unit = enemyUnits[i];
+					if (mouseEndX > unit.x-10 &&
+						mouseEndX < unit.x+10 &&
+						mouseEndY > unit.y-10 &&
+						mouseEndY < unit.y+10
+					){
+						if(isBattleUnitSelected){
+							actionType = 'attackUnit';
+							objectId = unit.id;
+						}
+					}
+				}
+				
+				socket.emit('orderForUnits', {
+					gameId: gameId,
+					playerId: selfId,
+					actionType: actionType,
+					objectId: objectId,
+					destinationX: mouseEndX,
+					destinationY: mouseEndY,
+				});
+				
+			}
 		} else {
 			socket.emit('selectionBox', {
 				gameId: gameId,

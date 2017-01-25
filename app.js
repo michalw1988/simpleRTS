@@ -37,14 +37,14 @@ var Game = function(id){
 		player1Base: {x: 100, y: 284, hp: 500, hpMax: 1000, spin: Math.random()*360,},
 		player2Base: {x: 1100, y: 284, hp: 500, hpMax: 1000, spin: Math.random()*360,},
 		mines: [
-			{x: 50, y: 84, owner: 0, spin: Math.random()*360,},
-			{x: 50, y: 484, owner: 0, spin: Math.random()*360,},
-			{x: 1150, y: 84, owner: 0, spin: Math.random()*360,},
-			{x: 1150, y: 484, owner: 0, spin: Math.random()*360,},
-			{x: 600, y: 184, owner: 0, spin: Math.random()*360,},
-			{x: 600, y: 384, owner: 0, spin: Math.random()*360,},
-			{x: 450, y: 284, owner: 0, spin: Math.random()*360,},
-			{x: 750, y: 284, owner: 0, spin: Math.random()*360,},
+			{id: Math.random(), x: 50, y: 84, owner: 0, spin: Math.random()*360,},
+			{id: Math.random(), x: 50, y: 484, owner: 0, spin: Math.random()*360,},
+			{id: Math.random(), x: 1150, y: 84, owner: 0, spin: Math.random()*360,},
+			{id: Math.random(), x: 1150, y: 484, owner: 0, spin: Math.random()*360,},
+			{id: Math.random(), x: 600, y: 184, owner: 0, spin: Math.random()*360,},
+			{id: Math.random(), x: 600, y: 384, owner: 0, spin: Math.random()*360,},
+			{id: Math.random(), x: 450, y: 284, owner: 0, spin: Math.random()*360,},
+			{id: Math.random(), x: 750, y: 284, owner: 0, spin: Math.random()*360,},
 		],
 		player1ProductionProgress: 0,
 		player2ProductionProgress: 0,
@@ -161,11 +161,11 @@ var Game = function(id){
 	self.updateUnits = function(){
 		for (var i in self.player1Units){
 			var unit = self.player1Units[i];
-			unit.moveUnit();
+			unit.executeOrder();
 		}
 		for (var i in self.player2Units){
 			var unit = self.player2Units[i];
-			unit.moveUnit();
+			unit.executeOrder();
 		}
 	}
 	
@@ -182,31 +182,52 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 		destinationX: destinationX,
 		destinationY: destinationY,
 		selected: false,
+		activeOrderType: 'none',
+		objectId: '',
 		angle: 0,
 		speed: 0,
 		hp: 0,
+		hpMax: 0,
 		range: 0,
 	}
 	
 	self.initUnit = function(type){
 		if (type === 1){
 			self.speed = 4;
+			self.hp = 10;
+			self.hpMax = 20;
 		} else if (type === 2){
 			self.speed = 2.5;
+			self.hp = 70;
+			self.hpMax = 100;
 		} else if (type === 3){
 			self.speed = 2;
+			self.hp = 40;
+			self.hpMax = 100;
 		} else if (type === 4){
 			self.speed = 1.5;
+			self.hp = 400;
+			self.hpMax = 500;
 		}
 	}
 	
-	self.moveUnit = function(){
+	self.executeOrder = function(){
+		if(self.activeOrderType === 'move'){
+		
+		} else if(self.activeOrderType === 'capture'){
+		
+		} else if(self.activeOrderType === 'attack'){
+		
+		}
+		
 		var distanceToDestination = Math.sqrt( (self.x-self.destinationX)*(self.x-self.destinationX) + (self.y-self.destinationY)*(self.y-self.destinationY) );
 		if (distanceToDestination > 3){
 			var angleInRadians = Math.atan2(self.destinationY - self.y, self.destinationX - self.x);
 			self.angle = angleInRadians;
 			self.x += Math.cos(angleInRadians) * self.speed;
 			self.y += Math.sin(angleInRadians) * self.speed;
+		} else {
+			self.activeOrderType = 'none';
 		}
 	}
 	return self;
@@ -421,19 +442,49 @@ io.sockets.on('connection', function(socket){
 		}
 	});
 	
-	socket.on('moveUnits',function(data){
+	socket.on('orderForUnits',function(data){
 		var game = GAME_LIST[data.gameId];
 		var unitList = null;
-		if (data.playerId === game.player1Id){ // player 1 sent right click
+		if (data.playerId === game.player1Id){ // player 1 sent order
 			unitList = game.player1Units;
-		} else { // player 2 sent right click
+		} else { // player 2 sent order
 			unitList = game.player2Units;
 		}
 		for (var i in unitList){
 			var unit = unitList[i];
 			if (unit.selected === true){
-				unit.destinationX = data.destinationX;
-				unit.destinationY = data.destinationY;
+				if (data.actionType === 'move'){
+					unit.activeOrderType = 'move';
+					unit.destinationX = data.destinationX;
+					unit.destinationY = data.destinationY;
+				} else if (data.actionType === 'capture'){
+					if (unit.type === 1){
+						unit.activeOrderType = 'capture';
+						unit.objectId = data.objectId;
+					} else {
+						unit.activeOrderType = 'move';
+					}
+					unit.destinationX = data.destinationX;
+					unit.destinationY = data.destinationY;
+				} else if (data.actionType === 'attackBase'){
+					if (unit.type !== 1){
+						unit.activeOrderType = 'attack';
+						unit.objectId = data.objectId;
+					} else {
+						unit.activeOrderType = 'move';
+					}
+					unit.destinationX = data.destinationX;
+					unit.destinationY = data.destinationY;
+				} else if (data.actionType === 'attackUnit'){
+					if (unit.type !== 1){
+						unit.activeOrderType = 'attack';
+						unit.objectId = data.objectId;
+					} else {
+						unit.activeOrderType = 'move';
+					}
+					unit.destinationX = data.destinationX;
+					unit.destinationY = data.destinationY;
+				}
 			}
 		}
 	});
