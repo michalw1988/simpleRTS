@@ -204,7 +204,7 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 		hp: 0,
 		hpMax: 0,
 		range: 0,
-		targetId: '';
+		targetId: '',
 	}
 	
 	self.initUnit = function(type){
