@@ -37,14 +37,14 @@ var Game = function(id){
 		player1Base: {x: 100, y: 284, hp: 500, hpMax: 1000, spin: Math.random()*360,},
 		player2Base: {x: 1100, y: 284, hp: 500, hpMax: 1000, spin: Math.random()*360,},
 		mines: [
-			{id: Math.random(), x: 50, y: 84, owner: 0, spin: Math.random()*360,},
-			{id: Math.random(), x: 50, y: 484, owner: 0, spin: Math.random()*360,},
-			{id: Math.random(), x: 1150, y: 84, owner: 0, spin: Math.random()*360,},
-			{id: Math.random(), x: 1150, y: 484, owner: 0, spin: Math.random()*360,},
-			{id: Math.random(), x: 600, y: 184, owner: 0, spin: Math.random()*360,},
-			{id: Math.random(), x: 600, y: 384, owner: 0, spin: Math.random()*360,},
-			{id: Math.random(), x: 450, y: 284, owner: 0, spin: Math.random()*360,},
-			{id: Math.random(), x: 750, y: 284, owner: 0, spin: Math.random()*360,},
+			{id: Math.random(), x: 50, y: 84, owner: 1, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 50, y: 484, owner: 1, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 1150, y: 84, owner: 2, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 1150, y: 484, owner: 2, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 600, y: 184, owner: 0, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 600, y: 384, owner: 0, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 450, y: 284, owner: 1, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 750, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
 		],
 		player1ProductionProgress: 0,
 		player2ProductionProgress: 0,
@@ -64,6 +64,21 @@ var Game = function(id){
 			var mine = self.mines[i];
 			mine.spin += 0.5;
 			if (mine.spin >= 360) mine.spin = 0;
+		}
+	}
+	
+	self.addCredits = function(){
+		for(var i in self.mines){
+			var mine = self.mines[i];
+			mine.countdown++;
+			if (mine.countdown > 50){
+				mine.countdown = 0;
+			}
+			if (mine.countdown === 30 && mine.owner === 1){
+				self.player1Credits += 10;
+			} else if (mine.countdown === 30 && mine.owner === 2){
+				self.player2Credits += 10;
+			}
 		}
 	}
 	
@@ -141,13 +156,13 @@ var Game = function(id){
 		if (whichPlayer === 1) {
 			x = self.player1Base.x;
 			y = self.player1Base.y;
-			destinationX = self.player1Base.x + Math.random()*100 - 50;
-			destinationY = self.player1Base.y + Math.random()*100 - 50;
+			destinationX = self.player1Base.x-5;
+			destinationY = self.player1Base.y;
 		} else {
 			x = self.player2Base.x;
 			y = self.player2Base.y;
-			destinationX = self.player2Base.x + Math.random()*100 - 50;
-			destinationY = self.player2Base.y + Math.random()*100 - 50;
+			destinationX = self.player2Base.x+5;
+			destinationY = self.player2Base.y;
 		}
 		var unit = Unit(id,type,x,y,destinationX,destinationY);
 		unit.initUnit(type);
@@ -161,11 +176,11 @@ var Game = function(id){
 	self.updateUnits = function(){
 		for (var i in self.player1Units){
 			var unit = self.player1Units[i];
-			unit.executeOrder();
+			unit.executeOrder(self.id, 1);
 		}
 		for (var i in self.player2Units){
 			var unit = self.player2Units[i];
-			unit.executeOrder();
+			unit.executeOrder(self.id, 2);
 		}
 	}
 	
@@ -189,6 +204,7 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 		hp: 0,
 		hpMax: 0,
 		range: 0,
+		targetId: '';
 	}
 	
 	self.initUnit = function(type){
@@ -200,34 +216,113 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 			self.speed = 2.5;
 			self.hp = 70;
 			self.hpMax = 100;
+			self.range = 75;
 		} else if (type === 3){
 			self.speed = 2;
 			self.hp = 40;
 			self.hpMax = 100;
+			self.range = 150;
 		} else if (type === 4){
 			self.speed = 1.5;
 			self.hp = 400;
 			self.hpMax = 500;
+			self.range = 125;
 		}
+		self.activeOrderType = 'move';
 	}
 	
-	self.executeOrder = function(){
+	self.executeOrder = function(id, whichPlayer){
+		var game = GAME_LIST[id];
 		if(self.activeOrderType === 'move'){
-		
+			// avoid base 1
+			var destinationPointDistanceToBase = Math.sqrt( (game.player1Base.x-self.destinationX)*(game.player1Base.x-self.destinationX) + (game.player1Base.y-self.destinationY)*(game.player1Base.y-self.destinationY) );
+			if(destinationPointDistanceToBase < 28){
+				var dist = 28;
+				var angle = Math.random()*360;
+				self.destinationX = game.player1Base.x + dist * Math.sin(angle * Math.PI / 180);
+				self.destinationY = game.player1Base.y + dist * Math.cos(angle * Math.PI / 180);
+			}
+			// avoid base 2
+			destinationPointDistanceToBase = Math.sqrt( (game.player2Base.x-self.destinationX)*(game.player2Base.x-self.destinationX) + (game.player2Base.y-self.destinationY)*(game.player2Base.y-self.destinationY) );
+			if(destinationPointDistanceToBase < 28){
+				var dist = 28;
+				var angle = Math.random()*360;
+				self.destinationX = game.player2Base.x + dist * Math.sin(angle * Math.PI / 180);
+				self.destinationY = game.player2Base.y + dist * Math.cos(angle * Math.PI / 180);
+			}
+			// avoid mines
+			for (var i in game.mines){
+				var mine = game.mines[i];
+				var destinationPointDistanceToMine = Math.sqrt( (mine.x-self.destinationX)*(mine.x-self.destinationX) + (mine.y-self.destinationY)*(mine.y-self.destinationY) );
+				if(destinationPointDistanceToMine < 20){
+					var dist = 20;
+					var angle = Math.random()*360;
+					self.destinationX = mine.x + dist * Math.sin(angle * Math.PI / 180);
+					self.destinationY = mine.y + dist * Math.cos(angle * Math.PI / 180);
+				}
+			}
+			//  avoid player 1 units
+			for (var i in game.player1Units){
+				var unit = game.player1Units[i];
+				var destinationPointDistanceToUnit = Math.sqrt( (unit.destinationX-self.destinationX)*(unit.destinationX-self.destinationX) + (unit.destinationY-self.destinationY)*(unit.destinationY-self.destinationY) );
+				if(destinationPointDistanceToUnit < 10 && unit.id !== self.id){
+					var dist = 10;
+					var angle = Math.random()*360;
+					self.destinationX = unit.destinationX + dist * Math.sin(angle * Math.PI / 180);
+					self.destinationY = unit.destinationY + dist * Math.cos(angle * Math.PI / 180);
+					self.activeOrderType = 'move';
+				}
+			}
+			//  avoid player 2 units
+			for (var i in game.player2Units){
+				var unit = game.player2Units[i];
+				var destinationPointDistanceToUnit = Math.sqrt( (unit.destinationX-self.destinationX)*(unit.destinationX-self.destinationX) + (unit.destinationY-self.destinationY)*(unit.destinationY-self.destinationY) );
+				if(destinationPointDistanceToUnit < 10 && unit.id !== self.id){
+					var dist = 10;
+					var angle = Math.random()*360;
+					self.destinationX = unit.destinationX + dist * Math.sin(angle * Math.PI / 180);
+					self.destinationY = unit.destinationY + dist * Math.cos(angle * Math.PI / 180);
+					self.activeOrderType = 'move';
+				}
+			}
+			// keep going
+			var distanceToDestination = Math.sqrt( (self.x-self.destinationX)*(self.x-self.destinationX) + (self.y-self.destinationY)*(self.y-self.destinationY) );
+			if (distanceToDestination > 3){
+				var angleInRadians = Math.atan2(self.destinationY - self.y, self.destinationX - self.x);
+				self.angle = angleInRadians;
+				self.x += Math.cos(angleInRadians) * self.speed;
+				self.y += Math.sin(angleInRadians) * self.speed;
+			} else {
+				self.activeOrderType = 'none';
+			}
 		} else if(self.activeOrderType === 'capture'){
-		
+			var mineToCapture = '';
+			for (var i in game.mines){
+				var mine = game.mines[i];
+				if(mine.id === self.objectId){
+					mineToCapture = mine;
+				}
+			}
+			if(mineToCapture.owner === whichPlayer){ // if the mine is already mine
+				self.activeOrderType = 'move';
+			} else { // go towards the mine
+				var distanceToDestination = Math.sqrt( (self.x-self.destinationX)*(self.x-self.destinationX) + (self.y-self.destinationY)*(self.y-self.destinationY) );
+				if (distanceToDestination > 3){
+					var angleInRadians = Math.atan2(self.destinationY - self.y, self.destinationX - self.x);
+					self.angle = angleInRadians;
+					self.x += Math.cos(angleInRadians) * self.speed;
+					self.y += Math.sin(angleInRadians) * self.speed;
+				} else { // capture the mine
+					mineToCapture.owner = whichPlayer;
+					if (whichPlayer === 1){
+						delete game.player1Units[self.id];
+					} else {
+						delete game.player2Units[self.id];
+					}
+				}
+			}
 		} else if(self.activeOrderType === 'attack'){
 		
-		}
-		
-		var distanceToDestination = Math.sqrt( (self.x-self.destinationX)*(self.x-self.destinationX) + (self.y-self.destinationY)*(self.y-self.destinationY) );
-		if (distanceToDestination > 3){
-			var angleInRadians = Math.atan2(self.destinationY - self.y, self.destinationX - self.x);
-			self.angle = angleInRadians;
-			self.x += Math.cos(angleInRadians) * self.speed;
-			self.y += Math.sin(angleInRadians) * self.speed;
-		} else {
-			self.activeOrderType = 'none';
 		}
 	}
 	return self;
@@ -572,6 +667,7 @@ setInterval(function(){
 			// update game state on server
 			game.continueProducingUnit();
 			game.spinBuildings();
+			game.addCredits();
 			game.updateUnits();
 			
 			// send updates to client

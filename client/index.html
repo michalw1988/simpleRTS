@@ -443,7 +443,6 @@
 		gameCanvas.drawImage(Img.buildings,32,0,32,32,-16,-16,32,32);
 		gameCanvas.restore();
 		
-		gameCanvas.fillStyle = '#cccccc';
 		for (var i in data.mines){
 			var mine = data.mines[i];
 			gameCanvas.save();
@@ -453,8 +452,33 @@
 			gameCanvas.restore();
 			
 			gameCanvas.beginPath();
-			gameCanvas.arc(mine.x,mine.y,6,0,2*Math.PI);
+			gameCanvas.arc(mine.x,mine.y,5,0,2*Math.PI);
+			var r,g,b,a;
+			if(mine.owner === 1){
+				gameCanvas.fillStyle = '#52E365';
+				r = 82;
+				g = 227;
+				b = 101;
+			} else if(mine.owner === 2){
+				gameCanvas.fillStyle = '#E3E152';
+				r = 227;
+				g = 225;
+				b = 82;
+			} else {
+				gameCanvas.fillStyle = '#cccccc';
+				r = 204;
+				g = 204;
+				b = 204;
+			}
 			gameCanvas.fill();
+			
+			if (mine.countdown > 30 && mine.countdown <= 50){
+				var textMoveFactor = (mine.countdown-15)/2;
+				var a = 1 - (mine.countdown-30)/20;
+				var color = 'rgba(' + r +',' + g + ',' + b + ',' + a + ')';
+				gameCanvas.fillStyle = color;
+				gameCanvas.fillText("+10", mine.x-10, mine.y-textMoveFactor);
+			}
 		}
 		
 		gameCanvas.fillStyle = '#52E365';
