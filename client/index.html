@@ -431,17 +431,21 @@
 		gameCanvas.clearRect(0,0,1200,568);
 		
 		// player 1 base
-		gameCanvas.save();
-		gameCanvas.translate(data.player1Base.x,data.player1Base.y);
-		gameCanvas.rotate(data.player1Base.spin * Math.PI/180);
-		gameCanvas.drawImage(Img.buildings,0,0,32,32,-16,-16,32,32);
-		gameCanvas.restore();
+		if(data.player1Base.hp > 0){
+			gameCanvas.save();
+			gameCanvas.translate(data.player1Base.x,data.player1Base.y);
+			gameCanvas.rotate(data.player1Base.spin * Math.PI/180);
+			gameCanvas.drawImage(Img.buildings,0,0,32,32,-16,-16,32,32);
+			gameCanvas.restore();
+		}
 		// player 2 base
-		gameCanvas.save();
-		gameCanvas.translate(data.player2Base.x,data.player2Base.y);
-		gameCanvas.rotate(data.player2Base.spin * Math.PI/180);
-		gameCanvas.drawImage(Img.buildings,32,0,32,32,-16,-16,32,32);
-		gameCanvas.restore();
+		if(data.player2Base.hp > 0){
+			gameCanvas.save();
+			gameCanvas.translate(data.player2Base.x,data.player2Base.y);
+			gameCanvas.rotate(data.player2Base.spin * Math.PI/180);
+			gameCanvas.drawImage(Img.buildings,32,0,32,32,-16,-16,32,32);
+			gameCanvas.restore();
+		}
 		
 		for (var i in data.mines){
 			var mine = data.mines[i];
@@ -699,6 +703,15 @@
 					gameCanvas.fillRect(unit.x-10, unit.y-14, 20*unit.hp/unit.hpMax, 3);
 				}
 			}
+		}
+		
+		for(i in data.laserShots){
+			var laserShot = data.laserShots[i];
+			gameCanvas.strokeStyle = '#ff0000';
+			gameCanvas.beginPath();
+			gameCanvas.moveTo(laserShot.shotX, laserShot.shotY);
+			gameCanvas.lineTo(laserShot.targetX, laserShot.targetY);
+			gameCanvas.stroke();
 		}
 		
 		// cursor

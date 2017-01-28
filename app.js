@@ -37,13 +37,13 @@ var Game = function(id){
 		player1Base: {x: 100, y: 284, hp: 500, hpMax: 1000, spin: Math.random()*360,},
 		player2Base: {x: 1100, y: 284, hp: 500, hpMax: 1000, spin: Math.random()*360,},
 		mines: [
-			{id: Math.random(), x: 50, y: 84, owner: 1, spin: Math.random()*360, countdown: 0},
-			{id: Math.random(), x: 50, y: 484, owner: 1, spin: Math.random()*360, countdown: 0},
-			{id: Math.random(), x: 1150, y: 84, owner: 2, spin: Math.random()*360, countdown: 0},
-			{id: Math.random(), x: 1150, y: 484, owner: 2, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 50, y: 84, owner: 0, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 50, y: 484, owner: 0, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 1150, y: 84, owner: 0, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 1150, y: 484, owner: 0, spin: Math.random()*360, countdown: 0},
 			{id: Math.random(), x: 600, y: 184, owner: 0, spin: Math.random()*360, countdown: 0},
 			{id: Math.random(), x: 600, y: 384, owner: 0, spin: Math.random()*360, countdown: 0},
-			{id: Math.random(), x: 450, y: 284, owner: 1, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 450, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
 			{id: Math.random(), x: 750, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
 		],
 		player1ProductionProgress: 0,
@@ -52,7 +52,9 @@ var Game = function(id){
 		player1ProductionType: 0,
 		player1Units: {},
 		player2Units: {},
-
+		laserShots: [],
+		player1CountdownToWin: 50,
+		player2CountdownToWin: 50,
 	}
 	
 	self.spinBuildings = function(){
@@ -177,10 +179,45 @@ var Game = function(id){
 		for (var i in self.player1Units){
 			var unit = self.player1Units[i];
 			unit.executeOrder(self.id, 1);
+			unit.fireAtWill(self.id, 1);
 		}
 		for (var i in self.player2Units){
 			var unit = self.player2Units[i];
 			unit.executeOrder(self.id, 2);
+			unit.fireAtWill(self.id, 2);
+		}
+	}
+	
+	self.checkIfWin = function(){
+		if(self.player2Base.hp <= 0){
+			self.player1CountdownToWin--;
+			if (self.player1CountdownToWin <= 0){
+				SOCKET_LIST[self.player1Id].emit('gameEnded',{message: "<div style='color: #3DF53D; margin-bottom: 2px;'><b>Congratulations!</b></div>You destroyed opponent's base ."});
+				SOCKET_LIST[self.player2Id].emit('gameEnded',{message: "<div style='color: #F72828; margin-bottom: 2px;'><b>Game over.</b></div>Your base was destroyed."});
+				
+				PLAYER_LIST[self.player1Id].playing = false;
+				PLAYER_LIST[self.player1Id].gameId = "";
+				PLAYER_LIST[self.player2Id].playing = false;
+				PLAYER_LIST[self.player2Id].gameId = "";
+				delete GAME_LIST[self.id];
+				updateLobbyGamesList();
+				updateLobbyPlayersList();
+			}
+		}
+		if(self.player1Base.hp <= 0){
+			self.player2CountdownToWin--;
+			if (self.player2CountdownToWin <= 0){
+				SOCKET_LIST[self.player1Id].emit('gameEnded',{message: "<div style='color: #F72828; margin-bottom: 2px;'><b>Game over.</b></div>Your base was destroyed."});
+				SOCKET_LIST[self.player2Id].emit('gameEnded',{message: "<div style='color: #3DF53D; margin-bottom: 2px;'><b>Congratulations!</b></div>You destroyed opponent's base ."});
+				
+				PLAYER_LIST[self.player1Id].playing = false;
+				PLAYER_LIST[self.player1Id].gameId = "";
+				PLAYER_LIST[self.player2Id].playing = false;
+				PLAYER_LIST[self.player2Id].gameId = "";
+				delete GAME_LIST[self.id];
+				updateLobbyGamesList();
+				updateLobbyPlayersList();
+			}
 		}
 	}
 	
@@ -205,28 +242,37 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 		hpMax: 0,
 		range: 0,
 		targetId: '',
+		countdown: 0,
+		reloadTime: 0,
+		damage: 0,
 	}
 	
 	self.initUnit = function(type){
 		if (type === 1){
 			self.speed = 4;
 			self.hp = 10;
-			self.hpMax = 20;
+			self.hpMax = 10;
 		} else if (type === 2){
 			self.speed = 2.5;
-			self.hp = 70;
+			self.hp = 100;
 			self.hpMax = 100;
 			self.range = 75;
+			self.reloadTime = 10;
+			self.damage = 25;
 		} else if (type === 3){
 			self.speed = 2;
-			self.hp = 40;
-			self.hpMax = 100;
+			self.hp = 150;
+			self.hpMax = 150;
 			self.range = 150;
+			self.reloadTime = 50;
+			self.damage = 75;
 		} else if (type === 4){
 			self.speed = 1.5;
-			self.hp = 400;
+			self.hp = 500;
 			self.hpMax = 500;
 			self.range = 125;
+			self.reloadTime = 7;
+			self.damage = 50;
 		}
 		self.activeOrderType = 'move';
 	}
@@ -322,9 +368,148 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 				}
 			}
 		} else if(self.activeOrderType === 'attack'){
+			if(self.objectId !== 'base'){ // attack unit
+				var enemyUnits = {};
+				if (whichPlayer === 1){
+					enemyUnits = game.player2Units;
+				} else {
+					enemyUnits = game.player1Units;
+				}
+				if(enemyUnits[self.objectId]){
+					enemyUnit = enemyUnits[self.objectId];
+					self.destinationX = enemyUnit.x;
+					self.destinationY = enemyUnit.y;
+					var distanceToEnemyUnit = Math.sqrt( (self.x-enemyUnit.x)*(self.x-enemyUnit.x) + (self.y-enemyUnit.y)*(self.y-enemyUnit.y) );
+					if (distanceToEnemyUnit > self.range){
+						var angleInRadians = Math.atan2(enemyUnit.y - self.y, enemyUnit.x - self.x);
+						self.angle = angleInRadians;
+						self.x += Math.cos(angleInRadians) * self.speed;
+						self.y += Math.sin(angleInRadians) * self.speed;
+					} else {
+						self.targetId = enemyUnit.id;
+					}
+				} else {
+					self.activeOrderType = 'move';
+				}
+			} else { // attack base
+				var enemyBase = null;
+				if (whichPlayer === 1){
+					enemyBase = game.player2Base;
+				} else {
+					enemyBase = game.player1Base;
+				}
+				if(enemyBase.hp > 0){
+					self.destinationX = enemyBase.x;
+					self.destinationY = enemyBase.y;
+					var distanceToEnemyBase = Math.sqrt( (self.x-enemyBase.x)*(self.x-enemyBase.x) + (self.y-enemyBase.y)*(self.y-enemyBase.y) );
+					if (distanceToEnemyBase > self.range){
+						var angleInRadians = Math.atan2(enemyBase.y - self.y, enemyBase.x - self.x);
+						self.angle = angleInRadians;
+						self.x += Math.cos(angleInRadians) * self.speed;
+						self.y += Math.sin(angleInRadians) * self.speed;
+					} else {
+						self.targetId = 'base';
+					}
+				} else {
+					//console.log('order change to move');
+					self.activeOrderType = 'move';
+				}
+				
+			}
+		}
+	}
+	
+	self.fireAtWill = function(id, whichPlayer){
+		if (self.type !== 1){ // only for non-engineer units
+			var game = GAME_LIST[id];
+			var enemyUnits = {};
+			var enemyBase =  null;
+			if (whichPlayer === 1){
+				enemyUnits = game.player2Units;
+				enemyBase = game.player2Base;
+			} else {
+				enemyUnits = game.player1Units;
+				enemyBase = game.player1Base;
+			}
+			
+			// search for target if there's none yet
+			if(self.targetId === ''){
+				// target base
+				var distanceToEnemyBase = Math.sqrt( (self.x-enemyBase.x)*(self.x-enemyBase.x) + (self.y-enemyBase.y)*(self.y-enemyBase.y) );
+				if (distanceToEnemyBase <= self.range && enemyBase.hp > 0){
+					self.targetId = 'base';
+					//console.log('enemy base is now a target');
+				}
+				// target enemy units (that order sometimes gives priority to firing to units)
+				for (var i in enemyUnits){
+					var enemyUnit = enemyUnits[i];
+					var distanceToEnemyUnit = Math.sqrt( (self.x-enemyUnit.x)*(self.x-enemyUnit.x) + (self.y-enemyUnit.y)*(self.y-enemyUnit.y) );
+					if (distanceToEnemyUnit <= self.range){
+						self.targetId = enemyUnit.id;
+					}
+				}
+			} else {
+				if (self.targetId === 'base'){
+					var distanceToTargetedBase = Math.sqrt( (self.x-enemyBase.x)*(self.x-enemyBase.x) + (self.y-enemyBase.y)*(self.y-enemyBase.y) );
+					if(distanceToTargetedBase > self.range){ // unit has lost target (base too far)
+						self.targetId = '';
+						//console.log('unit has lost target (unit is gone)');
+					} else { // fire (if reloaded);
+						if (self.countdown === 0){
+							//console.log('shoting to enemy base');
+							game.laserShots.push({
+								whichPlayer: whichPlayer,
+								type: self.type,
+								shotX: self.x,
+								shotY: self.y,
+								targetX: enemyBase.x,
+								targetY: enemyBase.y,
+							});
+							self.countdown += self.reloadTime;
+							enemyBase.hp -= self.damage;
+							if (enemyBase.hp <= 0){
+								//console.log('enemy base destroyed');
+								self.targetId = '';
+							}
+						}
+					}
+				} else { 
+					if (enemyUnits[self.targetId]){
+						var enemyUnit = enemyUnits[self.targetId];
+						var distanceToTargetedUnit = Math.sqrt( (self.x-enemyUnit.x)*(self.x-enemyUnit.x) + (self.y-enemyUnit.y)*(self.y-enemyUnit.y) );
+						if(distanceToTargetedUnit > self.range){ // unit has lost target (unit too far)
+							self.targetId = '';
+						} else { // fire (if reloaded);
+							if (self.countdown === 0){		
+								game.laserShots.push({
+									whichPlayer: whichPlayer,
+									type: self.type,
+									shotX: self.x,
+									shotY: self.y,
+									targetX: enemyUnits[self.targetId].x,
+									targetY: enemyUnits[self.targetId].y,
+								});
+								self.countdown += self.reloadTime;
+								enemyUnits[self.targetId].hp -= self.damage;
+								if (enemyUnits[self.targetId].hp <= 0){
+									delete enemyUnits[self.targetId];
+								}
+							}
+						}
+					} else  {
+						self.targetId = ''; // unit has lost target (unit is gone)
+						//console.log('unit has lost target (unit is gone)');
+					}
+				}
+			}
+			
+			if (self.countdown !== 0){
+				self.countdown--;
+			}
 		
 		}
 	}
+	
 	return self;
 }
 
@@ -665,10 +850,12 @@ setInterval(function(){
 		var game = GAME_LIST[i];
 		if (game.started){
 			// update game state on server
+			game.laserShots = [];
 			game.continueProducingUnit();
 			game.spinBuildings();
 			game.addCredits();
 			game.updateUnits();
+			game.checkIfWin();
 			
 			// send updates to client
 			var updatePack = [];
@@ -680,6 +867,7 @@ setInterval(function(){
 				mines: game.mines,
 				player1Units: game.player1Units,
 				player2Units: game.player2Units,
+				laserShots: game.laserShots,
 			};
 			
 			SOCKET_LIST[game.player1Id].emit('gameUpdate', updatePack);
