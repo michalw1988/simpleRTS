@@ -34,15 +34,15 @@ var Game = function(id){
 		started:false,
 		player1Credits: 5000,
 		player2Credits: 5000,
-		player1Base: {x: 100, y: 284, hp: 500, hpMax: 1000, spin: Math.random()*360,},
-		player2Base: {x: 1100, y: 284, hp: 500, hpMax: 1000, spin: Math.random()*360,},
+		player1Base: {x: 100, y: 284, hp: 3000, hpMax: 3000, spin: Math.random()*360,},
+		player2Base: {x: 1100, y: 284, hp: 3000, hpMax: 3000, spin: Math.random()*360,},
 		mines: [
-			{id: Math.random(), x: 50, y: 84, owner: 0, spin: Math.random()*360, countdown: 0},
-			{id: Math.random(), x: 50, y: 484, owner: 0, spin: Math.random()*360, countdown: 0},
-			{id: Math.random(), x: 1150, y: 84, owner: 0, spin: Math.random()*360, countdown: 0},
-			{id: Math.random(), x: 1150, y: 484, owner: 0, spin: Math.random()*360, countdown: 0},
-			{id: Math.random(), x: 600, y: 184, owner: 0, spin: Math.random()*360, countdown: 0},
-			{id: Math.random(), x: 600, y: 384, owner: 0, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 150, y: 84, owner: 0, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 150, y: 484, owner: 0, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 1050, y: 84, owner: 0, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 1050, y: 484, owner: 0, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 600, y: 134, owner: 0, spin: Math.random()*360, countdown: 0},
+			{id: Math.random(), x: 600, y: 434, owner: 0, spin: Math.random()*360, countdown: 0},
 			{id: Math.random(), x: 450, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
 			{id: Math.random(), x: 750, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
 		],
@@ -77,9 +77,9 @@ var Game = function(id){
 				mine.countdown = 0;
 			}
 			if (mine.countdown === 30 && mine.owner === 1){
-				self.player1Credits += 10;
+				self.player1Credits += 50;
 			} else if (mine.countdown === 30 && mine.owner === 2){
-				self.player2Credits += 10;
+				self.player2Credits += 50;
 			}
 		}
 	}
@@ -112,40 +112,48 @@ var Game = function(id){
 	
 	self.continueProducingUnit = function(){
 		// continuing production for player 1 - if was started
-		if(self.player1ProductionProgress !== 0){
-			if (self.player1ProductionType === 1){
-				self.player1ProductionProgress += 5;
-			} else if (self.player1ProductionType === 2){
-				self.player1ProductionProgress += 10;
-			} else if (self.player1ProductionType === 3){
-				self.player1ProductionProgress += 2;
-			} else if (self.player1ProductionType === 4){
-				self.player1ProductionProgress += 1;
+		if(self.player1Base.hp > 0){
+			if(self.player1ProductionProgress !== 0){
+				if (self.player1ProductionType === 1){
+					self.player1ProductionProgress += 5;
+				} else if (self.player1ProductionType === 2){
+					self.player1ProductionProgress += 10;
+				} else if (self.player1ProductionType === 3){
+					self.player1ProductionProgress += 2;
+				} else if (self.player1ProductionType === 4){
+					self.player1ProductionProgress += 1;
+				}
+				// add unit if finished
+				if(self.player1ProductionProgress >= 100){
+					self.finishProducingUnit(1, self.player1ProductionType);
+					self.player1ProductionProgress = 0;
+					self.player1ProductionType = 0;
+				}
 			}
-			// add unit if finished
-			if(self.player1ProductionProgress >= 100){
-				self.finishProducingUnit(1, self.player1ProductionType);
-				self.player1ProductionProgress = 0;
-				self.player1ProductionType = 0;
-			}
+		} else {
+			self.player1ProductionProgress = 0;
 		}
 		// continuing production for player 2 - if was started
-		if(self.player2ProductionProgress !== 0){
-			if (self.player2ProductionType === 1){
-				self.player2ProductionProgress += 5;
-			} else if (self.player2ProductionType === 2){
-				self.player2ProductionProgress += 10;
-			} else if (self.player2ProductionType === 3){
-				self.player2ProductionProgress += 2;
-			} else if (self.player2ProductionType === 4){
-				self.player2ProductionProgress += 1;
+		if(self.player2Base.hp > 0){
+			if(self.player2ProductionProgress !== 0){
+				if (self.player2ProductionType === 1){
+					self.player2ProductionProgress += 5;
+				} else if (self.player2ProductionType === 2){
+					self.player2ProductionProgress += 10;
+				} else if (self.player2ProductionType === 3){
+					self.player2ProductionProgress += 2;
+				} else if (self.player2ProductionType === 4){
+					self.player2ProductionProgress += 1;
+				}
+				// add unit if finished
+				if(self.player2ProductionProgress >= 100){
+					self.finishProducingUnit(2, self.player2ProductionType);
+					self.player2ProductionProgress = 0;
+					self.player2ProductionType = 0;
+				}
 			}
-			// add unit if finished
-			if(self.player2ProductionProgress >= 100){
-				self.finishProducingUnit(2, self.player2ProductionType);
-				self.player2ProductionProgress = 0;
-				self.player2ProductionType = 0;
-			}
+		} else {
+			self.player2ProductionProgress = 0;
 		}
 	}
 	
@@ -411,8 +419,10 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 						self.targetId = 'base';
 					}
 				} else {
-					//console.log('order change to move');
 					self.activeOrderType = 'move';
+					enemyBase.x = -100;
+					enemyBase.y = -100;
+					
 				}
 				
 			}
@@ -716,6 +726,24 @@ io.sockets.on('connection', function(socket){
 			){
 				unit.selected = true;
 				
+			} else {
+				unit.selected = false;
+			}
+		}
+	});
+	
+	socket.on('selectedUnit',function(data){
+		var game = GAME_LIST[data.gameId];
+		var unitList = null;
+		if (data.playerId === game.player1Id){ // player 1 sent selected unit
+			unitList = game.player1Units;
+		} else { // player 2 sent selected unit
+			unitList = game.player2Units;
+		}
+		for (var i in unitList){
+			var unit = unitList[i];
+			if (unit.id === data.selectedUnitId){
+				unit.selected = true;	
 			} else {
 				unit.selected = false;
 			}

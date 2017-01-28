@@ -399,6 +399,10 @@
 	});
 	
 	socket.on('gameStarted',function(data){
+		unit1Button.disabled = false;
+		unit2Button.disabled = false;
+		unit3Button.disabled = false;
+		unit4Button.disabled = false;
 		gameDiv.style.display = 'block';
 		roomScreenDiv.style.display = 'none';
 		leaveTheGameButton.style.display = 'none';
@@ -429,6 +433,13 @@
 		var player1Color = '#52E365';
 		var player2Color = '#E3E152';
 		gameCanvas.clearRect(0,0,1200,568);
+		
+		if(myBase.hp <= 0){
+			unit1Button.disabled = true;
+			unit2Button.disabled = true;
+			unit3Button.disabled = true;
+			unit4Button.disabled = true;
+		}
 		
 		// player 1 base
 		if(data.player1Base.hp > 0){
@@ -481,7 +492,7 @@
 				var a = 1 - (mine.countdown-30)/20;
 				var color = 'rgba(' + r +',' + g + ',' + b + ',' + a + ')';
 				gameCanvas.fillStyle = color;
-				gameCanvas.fillText("+10", mine.x-10, mine.y-textMoveFactor);
+				gameCanvas.fillText("+50", mine.x-10, mine.y-textMoveFactor);
 			}
 		}
 		
@@ -654,7 +665,8 @@
 			if (mouseEndX > enemyBase.x-20 &&
 				mouseEndX < enemyBase.x+20 &&
 				mouseEndY > enemyBase.y-20 &&
-				mouseEndY < enemyBase.y+20
+				mouseEndY < enemyBase.y+20 &&
+				enemyBase.hp > 0
 			){
 				if(isBattleUnitSelected){
 					whichCursor = 'attack';
@@ -667,7 +679,8 @@
 			if (mouseEndX > myBase.x-20 &&
 				mouseEndX < myBase.x+20 &&
 				mouseEndY > myBase.y-20 &&
-				mouseEndY < myBase.y+20
+				mouseEndY < myBase.y+20 &&
+				myBase.hp > 0
 			){
 				gameCanvas.fillStyle = '#cccccc';
 				gameCanvas.fillRect(myBase.x-15, myBase.y-22, 30, 4);
@@ -747,60 +760,80 @@
 	document.getElementById("gameCanvas").onmouseup = function(e){
 		var mouseXAbs = Math.abs(mouseStartX - mouseEndX);
 		var mouseYAbs = Math.abs(mouseStartY - mouseEndY);
-		//if (mouseStartX === mouseEndX && mouseStartY === mouseEndY && e.button === 0){
 		if (mouseXAbs < 20 && mouseYAbs < 20 && e.button === 0){
-			// if any unit selected then send / capture / attack command for selected group
-			if (isBattleUnitSelected || isEngineerUnitSelected){
-				var actionType = 'move';
-				var objectId = '';
-				for (var i in mines){
-					var mine = mines[i];
-					if (mouseEndX > mine.x-10 &&
-						mouseEndX < mine.x+10 &&
-						mouseEndY > mine.y-10 &&
-						mouseEndY < mine.y+10
-					){
-						if(isEngineerUnitSelected){
-							actionType = 'capture';
-							objectId = mine.id;
-						}
-					}
-				}
-				if (mouseEndX > enemyBase.x-20 &&
-					mouseEndX < enemyBase.x+20 &&
-					mouseEndY > enemyBase.y-20 &&
-					mouseEndY < enemyBase.y+20
+
+			// checking if any single (my) unit clicked
+			var selectedUnitId = '';
+			for (var i in myUnits){
+				var unit = myUnits[i];
+				if (mouseEndX > unit.x-10 &&
+					mouseEndX < unit.x+10 &&
+					mouseEndY > unit.y-10 &&
+					mouseEndY < unit.y+10
 				){
-					if(isBattleUnitSelected){
-						actionType = 'attackBase';
-						objectId = 'base';
-					}
+					selectedUnitId = unit.id;
 				}
-				for (var i in enemyUnits){
-					var unit = enemyUnits[i];
-					if (mouseEndX > unit.x-10 &&
-						mouseEndX < unit.x+10 &&
-						mouseEndY > unit.y-10 &&
-						mouseEndY < unit.y+10
-					){
-						if(isBattleUnitSelected){
-							actionType = 'attackUnit';
-							objectId = unit.id;
-						}
-					}
-				}
-				
-				socket.emit('orderForUnits', {
+			}
+			// if single unit clicked, send its id to server
+			if (selectedUnitId !== ''){
+				socket.emit('selectedUnit', {
 					gameId: gameId,
 					playerId: selfId,
-					actionType: actionType,
-					objectId: objectId,
-					destinationX: mouseEndX,
-					destinationY: mouseEndY,
+					selectedUnitId: selectedUnitId,
 				});
-				
+			} else { // if no single unit clicked
+			// if any unit selected then send move / capture / attack command for selected group
+				if (isBattleUnitSelected || isEngineerUnitSelected){
+					var actionType = 'move';
+					var objectId = '';
+					for (var i in mines){
+						var mine = mines[i];
+						if (mouseEndX > mine.x-10 &&
+							mouseEndX < mine.x+10 &&
+							mouseEndY > mine.y-10 &&
+							mouseEndY < mine.y+10
+						){
+							if(isEngineerUnitSelected){
+								actionType = 'capture';
+								objectId = mine.id;
+							}
+						}
+					}
+					if (mouseEndX > enemyBase.x-20 &&
+						mouseEndX < enemyBase.x+20 &&
+						mouseEndY > enemyBase.y-20 &&
+						mouseEndY < enemyBase.y+20
+					){
+						if(isBattleUnitSelected){
+							actionType = 'attackBase';
+							objectId = 'base';
+						}
+					}
+					for (var i in enemyUnits){
+						var unit = enemyUnits[i];
+						if (mouseEndX > unit.x-10 &&
+							mouseEndX < unit.x+10 &&
+							mouseEndY > unit.y-10 &&
+							mouseEndY < unit.y+10
+						){
+							if(isBattleUnitSelected){
+								actionType = 'attackUnit';
+								objectId = unit.id;
+							}
+						}
+					}
+					
+					socket.emit('orderForUnits', {
+						gameId: gameId,
+						playerId: selfId,
+						actionType: actionType,
+						objectId: objectId,
+						destinationX: mouseEndX,
+						destinationY: mouseEndY,
+					});
+				} 
 			}
-		} else {
+		} else { // of selected area wasn't a "click", send selection box to server
 			socket.emit('selectionBox', {
 				gameId: gameId,
 				playerId: selfId,

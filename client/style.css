@@ -356,6 +356,10 @@ body {
 	text-align: left;
 }
 
+.unitButton:disabled{
+	color: #666666;
+}
+
 .unitImage{
 	margin: 1px;
 }
@@ -398,10 +402,6 @@ body {
 	right: 135px;
 	top: 6px;
 }
-
-
-
-
 
 
 
