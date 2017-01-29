@@ -200,7 +200,7 @@ var Game = function(id){
 		if(self.player2Base.hp <= 0){
 			self.player1CountdownToWin--;
 			if (self.player1CountdownToWin <= 0){
-				SOCKET_LIST[self.player1Id].emit('gameEnded',{message: "<div style='color: #3DF53D; margin-bottom: 2px;'><b>Congratulations!</b></div>You destroyed opponent's base ."});
+				SOCKET_LIST[self.player1Id].emit('gameEnded',{message: "<div style='color: #3DF53D; margin-bottom: 2px;'><b>Congratulations!</b></div>You destroyed opponent's base."});
 				SOCKET_LIST[self.player2Id].emit('gameEnded',{message: "<div style='color: #F72828; margin-bottom: 2px;'><b>Game over.</b></div>Your base was destroyed."});
 				
 				PLAYER_LIST[self.player1Id].playing = false;
@@ -245,6 +245,7 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 		activeOrderType: 'none',
 		moving: false,
 		objectId: '',
+		group: 0,
 		angle: 0,
 		speed: 0,
 		hp: 0,
@@ -674,8 +675,18 @@ io.sockets.on('connection', function(socket){
 		game.started = true;
 		player1.playing = true;
 		player2.playing = true;
-		SOCKET_LIST[game.player1Id].emit('gameStarted',{player1name:player1.name, player2name:player2.name});
-		SOCKET_LIST[game.player2Id].emit('gameStarted',{player1name:player1.name, player2name:player2.name});
+		SOCKET_LIST[game.player1Id].emit('gameStarted',{
+			player1Id: game.player1Id, 
+			player2Id: game.player2Id, 
+			player1name:player1.name, 
+			player2name:player2.name,
+		});
+		SOCKET_LIST[game.player2Id].emit('gameStarted',{
+			player1Id: game.player1Id, 
+			player2Id: game.player2Id, 
+			player1name:player1.name, 
+			player2name:player2.name
+		});
 		updateLobbyGamesList();
 		updateLobbyPlayersList();
 	});
@@ -819,7 +830,38 @@ io.sockets.on('connection', function(socket){
 		}
 	});
 	
+	socket.on('groupSet',function(data){
+		var game = GAME_LIST[data.gameId];
+		var unitList = null;
+		if (data.playerId === game.player1Id){ // player 1 set a group
+			unitList = game.player1Units;
+		} else { // player 2 set a group
+			unitList = game.player2Units;
+		}
+		for (var i in unitList){
+			var unit = unitList[i];
+			if(unit.selected){
+				unit.group = data.groupNumber;
+			}
+		}
+	});
 	
+	socket.on('groupCalled',function(data){
+		var game = GAME_LIST[data.gameId];
+		var unitList = null;
+		if (data.playerId === game.player1Id){ // player 1 set a group
+			unitList = game.player1Units;
+		} else { // player 2 set a group
+			unitList = game.player2Units;
+		}
+		for (var i in unitList){
+			var unit = unitList[i];
+			unit.selected = false;
+			if(unit.group === data.groupNumber){
+				unit.selected = true;
+			}
+		}
+	});
 	
 	
 });

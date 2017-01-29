@@ -61,10 +61,10 @@
 	<div id="gameTopBarDiv">
 		<div id="creditsDiv"></div>
 		<div id="unitButtonsDiv">
-			<button id="unit1Button" class="unitButton"><img class="unitImage" src="client/img/unit1.png"><span class="unitLabel">&nbsp;$500</span></button>
-			<button id="unit2Button" class="unitButton"><img class="unitImage" src="client/img/unit1.png"><span class="unitLabel">&nbsp;$250</span></button>
-			<button id="unit3Button" class="unitButton"><img class="unitImage" src="client/img/unit1.png"><span class="unitLabel">&nbsp;$750</span></button>
-			<button id="unit4Button" class="unitButton"><img class="unitImage" src="client/img/unit1.png"><span class="unitLabel">&nbsp;$1500</span></button>
+			<button id="unit1Button" class="unitButton"><img id="unit1ButtonImage" class="unitImage" src="client/img/unit1.png"><span class="unitLabel">&nbsp;$500</span></button>
+			<button id="unit2Button" class="unitButton"><img id="unit2ButtonImage" class="unitImage" src="client/img/unit1.png"><span class="unitLabel">&nbsp;$250</span></button>
+			<button id="unit3Button" class="unitButton"><img id="unit3ButtonImage" class="unitImage" src="client/img/unit1.png"><span class="unitLabel">&nbsp;$750</span></button>
+			<button id="unit4Button" class="unitButton"><img id="unit4ButtonImage" class="unitImage" src="client/img/unit1.png"><span class="unitLabel">&nbsp;$1500</span></button>
 		</div>
 		<div id="progressBarDiv">
 			<div id="progressBarBackground"></div>
@@ -75,7 +75,7 @@
 		<button id="surrenderButton">Surrender</button>
 	</div>
 	
-	<canvas id="gameCanvas" width="1200" height="568"></canvas>
+	<canvas id="gameCanvas" width="1200" height="568" tabindex='1'></canvas>
 	<div id="endGameMessageDiv">
 		<div id="endGameMessageBoxDiv"></div>
 		<button id="endGameMessageButton">Exit to lobby</button>
@@ -154,6 +154,10 @@
 	var unit2Button = document.getElementById("unit2Button");
 	var unit3Button = document.getElementById("unit3Button");
 	var unit4Button = document.getElementById("unit4Button");
+	var unit1ButtonImage = document.getElementById("unit1ButtonImage");
+	var unit2ButtonImage = document.getElementById("unit2ButtonImage");
+	var unit3ButtonImage = document.getElementById("unit3ButtonImage");
+	var unit4ButtonImage = document.getElementById("unit4ButtonImage");
 	var progressBarProgress = document.getElementById("progressBarProgress");
 	
 	
@@ -411,6 +415,17 @@
 		readyGameButton.style.display = 'none';
 		readyGameButton.innerHTML = "I'm ready";
 		playersNamesDiv.innerHTML = '<div style="color:#52E365; display:inline;">' + data.player1name + '</div><div style="color:#cccccc; display:inline;">&nbsp;vs&nbsp;</div><div style="color:#E3E152; display:inline;">' + data.player2name + '</div>';
+		if(selfId === data.player1Id){
+			unit1ButtonImage.src = '/client/img/unit1a.png';
+			unit2ButtonImage.src = '/client/img/unit2a.png';
+			unit3ButtonImage.src = '/client/img/unit3a.png';
+			unit4ButtonImage.src = '/client/img/unit4a.png';
+		} else {
+			unit1ButtonImage.src = '/client/img/unit1b.png';
+			unit2ButtonImage.src = '/client/img/unit2b.png';
+			unit3ButtonImage.src = '/client/img/unit3b.png';
+			unit4ButtonImage.src = '/client/img/unit4b.png';
+		}
 	});
 	
 	socket.on('gameEnded',function(data){
@@ -575,6 +590,12 @@
 				gameCanvas.lineTo(unit.x+7, unit.y+10);
 				gameCanvas.stroke();
 				
+				if(unit.group !== 0){
+					gameCanvas.fillStyle = '#cccccc';
+					gameCanvas.font = '8px Verdana';
+					gameCanvas.fillText(unit.group, unit.x+11, unit.y-8);
+				}
+				
 				gameCanvas.fillStyle = '#cccccc';
 				gameCanvas.fillRect(unit.x-10, unit.y-14, 20, 3);
 				gameCanvas.fillStyle = '#0000ff';
@@ -660,6 +681,12 @@
 				gameCanvas.lineTo(unit.x+10, unit.y+10);
 				gameCanvas.lineTo(unit.x+7, unit.y+10);
 				gameCanvas.stroke();
+				
+				if(unit.group !== 0){
+					gameCanvas.fillStyle = '#cccccc';
+					gameCanvas.font = '8px Verdana';
+					gameCanvas.fillText(unit.group, unit.x+11, unit.y-8);
+				}
 				
 				gameCanvas.fillStyle = '#cccccc';
 				gameCanvas.fillRect(unit.x-10, unit.y-14, 20, 3);
@@ -929,6 +956,21 @@
 	document.getElementById("gameCanvas").oncontextmenu = function(e){
 		e.preventDefault();
 		socket.emit('rightClick',{gameId:gameId, playerId: selfId});
+	}
+	
+	document.getElementById("gameCanvas").onkeyup = function(e){
+		// set group
+		if(isEngineerUnitSelected || isBattleUnitSelected){ // set group
+			if (e.keyCode === 112 || e.keyCode === 113 || e.keyCode === 114 || e.keyCode === 115){
+				var groupNumber = e.keyCode - 111;
+				socket.emit('groupSet',{gameId: gameId, playerId: selfId, groupNumber: groupNumber});
+			}
+		}
+		// call group
+		if (e.keyCode === 49 || e.keyCode === 50 || e.keyCode === 51 || e.keyCode === 52){
+			var groupNumber = e.keyCode - 48;
+			socket.emit('groupCalled',{gameId: gameId, playerId: selfId, groupNumber: groupNumber});
+		}
 	}
 	
 	
