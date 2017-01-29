@@ -243,6 +243,7 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 		destinationY: destinationY,
 		selected: false,
 		activeOrderType: 'none',
+		moving: false,
 		objectId: '',
 		angle: 0,
 		speed: 0,
@@ -257,7 +258,7 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 	
 	self.initUnit = function(type){
 		if (type === 1){
-			self.speed = 4;
+			self.speed = 3.5;
 			self.hp = 10;
 			self.hpMax = 10;
 		} else if (type === 2){
@@ -275,7 +276,7 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 			self.reloadTime = 50;
 			self.damage = 75;
 		} else if (type === 4){
-			self.speed = 1.5;
+			self.speed = 1.6;
 			self.hp = 500;
 			self.hpMax = 500;
 			self.range = 125;
@@ -288,6 +289,8 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 	self.executeOrder = function(id, whichPlayer){
 		var game = GAME_LIST[id];
 		if(self.activeOrderType === 'move'){
+			self.moving = true;
+		
 			// avoid base 1
 			var destinationPointDistanceToBase = Math.sqrt( (game.player1Base.x-self.destinationX)*(game.player1Base.x-self.destinationX) + (game.player1Base.y-self.destinationY)*(game.player1Base.y-self.destinationY) );
 			if(destinationPointDistanceToBase < 28){
@@ -348,8 +351,11 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 				self.y += Math.sin(angleInRadians) * self.speed;
 			} else {
 				self.activeOrderType = 'none';
+				self.moving = false;
 			}
 		} else if(self.activeOrderType === 'capture'){
+			self.moving = true;
+			
 			var mineToCapture = '';
 			for (var i in game.mines){
 				var mine = game.mines[i];
@@ -389,11 +395,13 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 					self.destinationY = enemyUnit.y;
 					var distanceToEnemyUnit = Math.sqrt( (self.x-enemyUnit.x)*(self.x-enemyUnit.x) + (self.y-enemyUnit.y)*(self.y-enemyUnit.y) );
 					if (distanceToEnemyUnit > self.range){
+						self.moving = true;
 						var angleInRadians = Math.atan2(enemyUnit.y - self.y, enemyUnit.x - self.x);
 						self.angle = angleInRadians;
 						self.x += Math.cos(angleInRadians) * self.speed;
 						self.y += Math.sin(angleInRadians) * self.speed;
 					} else {
+						self.moving = false;
 						self.targetId = enemyUnit.id;
 					}
 				} else {
@@ -411,20 +419,20 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 					self.destinationY = enemyBase.y;
 					var distanceToEnemyBase = Math.sqrt( (self.x-enemyBase.x)*(self.x-enemyBase.x) + (self.y-enemyBase.y)*(self.y-enemyBase.y) );
 					if (distanceToEnemyBase > self.range){
+						self.moving = true;
 						var angleInRadians = Math.atan2(enemyBase.y - self.y, enemyBase.x - self.x);
 						self.angle = angleInRadians;
 						self.x += Math.cos(angleInRadians) * self.speed;
 						self.y += Math.sin(angleInRadians) * self.speed;
 					} else {
+						self.moving = false;
 						self.targetId = 'base';
 					}
 				} else {
 					self.activeOrderType = 'move';
 					enemyBase.x = -100;
 					enemyBase.y = -100;
-					
 				}
-				
 			}
 		}
 	}
