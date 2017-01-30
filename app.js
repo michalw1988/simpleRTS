@@ -863,6 +863,26 @@ io.sockets.on('connection', function(socket){
 		}
 	});
 	
+	socket.on('formationLine',function(data){
+		var game = GAME_LIST[data.gameId];
+		var unitList = null;
+		if (data.playerId === game.player1Id){ // player 1 set a group
+			unitList = game.player1Units;
+		} else { // player 2 set a group
+			unitList = game.player2Units;
+		}
+		var counter = 0;
+		for (var i in unitList){
+			var unit = unitList[i];
+			if(unit.selected === true){
+				unit.destinationX = data.destinations[counter].x;
+				unit.destinationY = data.destinations[counter].y;
+				unit.activeOrderType = 'move';
+				counter++;
+			}
+		}
+	});
+	
 	
 });
 

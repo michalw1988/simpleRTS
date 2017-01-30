@@ -102,7 +102,8 @@
 	var mouseStartY = 0;
 	var mouseEndX = 0;
 	var mouseEndY = 0;
-	var isMouseDown = false;
+	var isMouseLeftKeyDown = false;
+	var isMouseRightKeyDown = false;
 	var topLeftX = 0;
 	var topLeftY = 0;
 	var bottomRightX = 0;
@@ -523,14 +524,14 @@
 			// line to destination
 			if (unit.selected === true && selfId === data.player1Id){
 				if(unit.activeOrderType === 'move'){
-					gameCanvas.fillStyle = 'rgba(0, 162, 232, 0.1)';
-					gameCanvas.strokeStyle = 'rgba(0, 162, 232, 0.4)';
+					gameCanvas.fillStyle = 'rgba(0, 162, 232, 0.4)';
+					gameCanvas.strokeStyle = 'rgba(0, 162, 232, 0.2)';
 				} else if(unit.activeOrderType === 'capture'){
-					gameCanvas.fillStyle = 'rgba(255, 242, 0, 0.1)';
-					gameCanvas.strokeStyle = 'rgba(255, 242, 0, 0.4)';
+					gameCanvas.fillStyle = 'rgba(255, 242, 0, 0.4)';
+					gameCanvas.strokeStyle = 'rgba(255, 242, 0, 0.2)';
 				} else if(unit.activeOrderType === 'attack'){
-					gameCanvas.fillStyle = 'rgba(255, 0, 0, 0.1)';
-					gameCanvas.strokeStyle = 'rgba(255, 0, 0, 0.4)';
+					gameCanvas.fillStyle = 'rgba(255, 0, 0, 0.4)';
+					gameCanvas.strokeStyle = 'rgba(255, 0, 0, 0.2)';
 				}
 				gameCanvas.beginPath();
 				gameCanvas.moveTo(unit.x, unit.y);
@@ -615,14 +616,14 @@
 			// line to destination
 			if (unit.selected === true && selfId === data.player2Id){			
 				if(unit.activeOrderType === 'move'){
-					gameCanvas.fillStyle = 'rgba(0, 162, 232, 0.1)';
-					gameCanvas.strokeStyle = 'rgba(0, 162, 232, 0.4)';
+					gameCanvas.fillStyle = 'rgba(0, 162, 232, 0.4)';
+					gameCanvas.strokeStyle = 'rgba(0, 162, 232, 0.2)';
 				} else if(unit.activeOrderType === 'capture'){
-					gameCanvas.fillStyle = 'rgba(255, 242, 0, 0.1)';
-					gameCanvas.strokeStyle = 'rgba(255, 242, 0, 0.4)';
+					gameCanvas.fillStyle = 'rgba(255, 242, 0, 0.4)';
+					gameCanvas.strokeStyle = 'rgba(255, 242, 0, 0.2)';
 				} else if(unit.activeOrderType === 'attack'){
-					gameCanvas.fillStyle = 'rgba(255, 0, 0, 0.1)';
-					gameCanvas.strokeStyle = 'rgba(255, 0, 0, 0.4)';
+					gameCanvas.fillStyle = 'rgba(255, 0, 0, 0.4)';
+					gameCanvas.strokeStyle = 'rgba(255, 0, 0, 0.2)';
 				}
 				gameCanvas.beginPath();
 				gameCanvas.moveTo(unit.x, unit.y);
@@ -716,12 +717,21 @@
 			whichCursor = 'move';
 		}
 		
-		// selection box
-		if (isMouseDown == true && mouseStartX !== mouseEndX && mouseStartY !== mouseEndY) {
+		var mouseXAbs = Math.abs(mouseStartX - mouseEndX);
+		var mouseYAbs = Math.abs(mouseStartY - mouseEndY);
+		// drawing selection box
+		if (isMouseLeftKeyDown == true && mouseStartX !== mouseEndX && mouseStartY !== mouseEndY) {
 			gameCanvas.strokeStyle = "#cccccc";
 			gameCanvas.strokeRect(topLeftX, topLeftY, bottomRightX-topLeftX, bottomRightY-topLeftY);
+		} else if (isMouseRightKeyDown === true && ( mouseXAbs > 20 || mouseYAbs > 20 ) ) {
+			// drawing "front line"
+			gameCanvas.strokeStyle = 'rgba(0, 162, 232, 0.4)';
+			gameCanvas.beginPath();
+			gameCanvas.moveTo(mouseStartX, mouseStartY);
+			gameCanvas.lineTo(mouseEndX, mouseEndY);
+			gameCanvas.stroke();
 		} else { 
-		// cursor changing and/or hp bar displaying
+			// cursor changing and/or hp bar displaying
 			for (var i in mines){
 				var mine = mines[i];
 				if (mouseEndX > mine.x-10 &&
@@ -825,8 +835,12 @@
 	document.getElementById("gameCanvas").onmousedown = function(e){
 		mouseStartX = e.pageX - gameDiv.offsetLeft;
 		mouseStartY = e.pageY - gameDiv.offsetTop - 32;
-		isMouseDown = true;
-		//alert("X: " + mouseStartX + " | Y: " + mouseStartY);
+		if (e.button === 0){
+			isMouseLeftKeyDown = true;
+		}
+		if (e.button === 2){
+			isMouseRightKeyDown = true;
+		}
 	}
 	
 	document.getElementById("gameCanvas").onmouseup = function(e){
@@ -905,17 +919,76 @@
 					});
 				} 
 			}
-		} else { // of selected area wasn't a "click", send selection box to server
+		} else if(e.button === 0) { // or selected area wasn't a "click", send selection box to server
 			socket.emit('selectionBox', {
 				gameId: gameId,
 				playerId: selfId,
 				topLeftX: topLeftX, 
 				topLeftY: topLeftY, 
 				bottomRightX: bottomRightX, 
-				bottomRightY: bottomRightY
+				bottomRightY: bottomRightY,
 			});
 		}
-		isMouseDown = false;
+
+		if (mouseXAbs < 20 && mouseYAbs < 20 && e.button === 2){
+			socket.emit('rightClick',{gameId:gameId, playerId: selfId});
+		} else if (e.button === 2){
+			var numberOfSelectedUnits = 0;
+			for (var i in myUnits){
+				var unit = myUnits[i];
+				if (unit.selected){
+					numberOfSelectedUnits++;
+				}
+			}
+			
+			var lineLength = Math.sqrt( (mouseStartX-mouseEndX)*(mouseStartX-mouseEndX) + (mouseStartY-mouseEndY)*(mouseStartY-mouseEndY) );
+			var lineAngleInRadians = Math.atan2(mouseEndY-mouseStartY, mouseEndX-mouseStartX);
+			var howManyUnitsInSingleLine = Math.floor(lineLength / 15) + 1;
+			var howManyLines = Math.ceil(numberOfSelectedUnits / howManyUnitsInSingleLine);
+			var howManyFullLines = Math.floor(numberOfSelectedUnits / howManyUnitsInSingleLine);
+			
+			var destinations = [];
+			
+			console.log('sending line - from: ' + mouseStartX + ', ' + mouseStartY + ' to: ' + mouseEndX + ', ' + mouseEndY);
+			console.log('selected units: ' + numberOfSelectedUnits);
+			console.log('line length: ' + lineLength);
+			console.log('line angle: ' + lineAngleInRadians / Math.PI * 180);
+			console.log('there can be ' + howManyUnitsInSingleLine + ' unit in single line, so we need ' + howManyLines + ' lines.');
+			
+			for (var n = 0; n < howManyLines; n++){
+				if (n < howManyFullLines){
+					var margin = ( lineLength - 15*(howManyUnitsInSingleLine-1) )/2;
+					for (var i = 0; i < howManyUnitsInSingleLine; i++){
+						var x = ( mouseStartX + (margin+i*15) * Math.cos(lineAngleInRadians) - (n*15) * Math.sin(lineAngleInRadians) ).toFixed(1);
+						var y = ( mouseStartY + (margin+i*15) * Math.sin(lineAngleInRadians) + (n*15) * Math.cos(lineAngleInRadians) ).toFixed(1);
+						destinations.push({
+							x: x,
+							y: y,
+						});
+						console.log('unit in line ' + (n+1) + ' on position: ' + x + ', ' + y);
+					}
+				} else {
+					var unitsLeft = numberOfSelectedUnits - howManyFullLines*howManyUnitsInSingleLine;
+					var margin = ( lineLength - 15*(unitsLeft-1) )/2;
+					for (var i = 0; i < unitsLeft; i++){
+						var x = ( mouseStartX + (margin+i*15) * Math.cos(lineAngleInRadians) - (n*15) * Math.sin(lineAngleInRadians) ).toFixed(1);
+						var y = ( mouseStartY + (margin+i*15) * Math.sin(lineAngleInRadians) + (n*15) * Math.cos(lineAngleInRadians) ).toFixed(1);
+						destinations.push({
+							x: x,
+							y: y,
+						});
+						console.log('unit in line ' + (n+1) + ' on position: ' + x + ', ' + y);
+					}
+				}
+			}
+		
+			socket.emit('formationLine',{gameId: gameId, playerId: selfId, destinations: destinations});
+			
+			
+		}
+		
+		isMouseLeftKeyDown = false;
+		isMouseRightKeyDown = false;
 		topLeftX = 0;
 		topLeftY = 0;
 		bottomRightX = 0;
@@ -926,7 +999,7 @@
 		mouseEndX = e.pageX - gameDiv.offsetLeft;
 		mouseEndY = e.pageY - gameDiv.offsetTop - 32;
 		
-		if (isMouseDown === true){
+		if (isMouseLeftKeyDown === true){
 			topLeftX = 0;
 			topLeftY = 0;
 			bottomRightX = 0;
@@ -948,14 +1021,15 @@
 				topLeftY = mouseStartY;
 				bottomRightY = mouseEndY;
 			}
-		} else {
-			// unit & bases hp bars
 		}
 	}
 	
 	document.getElementById("gameCanvas").oncontextmenu = function(e){
 		e.preventDefault();
-		socket.emit('rightClick',{gameId:gameId, playerId: selfId});
+	}
+	
+	document.getElementById("gameCanvas").onkeydown = function(e){
+		e.preventDefault();
 	}
 	
 	document.getElementById("gameCanvas").onkeyup = function(e){
