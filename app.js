@@ -34,8 +34,8 @@ var Game = function(id){
 		started:false,
 		player1Credits: 5000,
 		player2Credits: 5000,
-		player1Base: {x: 100, y: 284, hp: 3000, hpMax: 3000, spin: Math.random()*360,},
-		player2Base: {x: 1100, y: 284, hp: 3000, hpMax: 3000, spin: Math.random()*360,},
+		player1Base: {x: 100, y: 284, hp: 5000, hpMax: 5000, spin: Math.random()*360,},
+		player2Base: {x: 1100, y: 284, hp: 5000, hpMax: 5000, spin: Math.random()*360,},
 		mines: [
 			{id: Math.random(), x: 150, y: 84, owner: 0, spin: Math.random()*360, countdown: 0},
 			{id: Math.random(), x: 150, y: 484, owner: 0, spin: Math.random()*360, countdown: 0},
@@ -52,9 +52,11 @@ var Game = function(id){
 		player1ProductionType: 0,
 		player1Units: {},
 		player2Units: {},
-		laserShots: [],
 		player1CountdownToWin: 50,
 		player2CountdownToWin: 50,
+		player1Bullets: {},
+		player2Bullets: {},
+		newExplosions: [],
 	}
 	
 	self.spinBuildings = function(){
@@ -196,6 +198,19 @@ var Game = function(id){
 		}
 	}
 	
+	self.updateBullets = function(){
+		for (var i in self.player1Bullets){
+			var bullet = self.player1Bullets[i];
+			bullet.moveBullet(self.id, 1);
+			bullet.checkCollisions(self.id, 1);
+		}
+		for (var i in self.player2Bullets){
+			var bullet = self.player2Bullets[i];
+			bullet.moveBullet(self.id, 2);
+			bullet.checkCollisions(self.id, 2);
+		}
+	}
+	
 	self.checkIfWin = function(){
 		if(self.player2Base.hp <= 0){
 			self.player1CountdownToWin--;
@@ -259,25 +274,25 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 	
 	self.initUnit = function(type){
 		if (type === 1){
-			self.speed = 3.5;
+			self.speed = 2.5;
 			self.hp = 10;
 			self.hpMax = 10;
 		} else if (type === 2){
-			self.speed = 2.5;
+			self.speed = 1.8;
 			self.hp = 100;
 			self.hpMax = 100;
 			self.range = 75;
 			self.reloadTime = 10;
 			self.damage = 25;
 		} else if (type === 3){
-			self.speed = 2;
+			self.speed = 1.5;
 			self.hp = 150;
 			self.hpMax = 150;
 			self.range = 150;
 			self.reloadTime = 50;
 			self.damage = 75;
 		} else if (type === 4){
-			self.speed = 1.6;
+			self.speed = 1.2;
 			self.hp = 500;
 			self.hpMax = 500;
 			self.range = 125;
@@ -475,21 +490,15 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 						//console.log('unit has lost target (unit is gone)');
 					} else { // fire (if reloaded);
 						if (self.countdown === 0){
-							//console.log('shoting to enemy base');
-							game.laserShots.push({
-								whichPlayer: whichPlayer,
-								type: self.type,
-								shotX: self.x,
-								shotY: self.y,
-								targetX: enemyBase.x,
-								targetY: enemyBase.y,
-							});
-							self.countdown += self.reloadTime;
-							enemyBase.hp -= self.damage;
-							if (enemyBase.hp <= 0){
-								//console.log('enemy base destroyed');
-								self.targetId = '';
+							var id = Math.random();
+							var angleInRadians = Math.atan2(enemyBase.y - self.y, enemyBase.x - self.x);
+							var bullet = Bullet(id, self.type, self.x, self.y, angleInRadians, self.damage, self.range+10, 'base');
+							if (whichPlayer === 1) {
+								game.player1Bullets[id] = bullet;
+							} else {
+								game.player2Bullets[id] = bullet;
 							}
+							self.countdown += self.reloadTime;
 						}
 					}
 				} else { 
@@ -500,19 +509,15 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 							self.targetId = '';
 						} else { // fire (if reloaded);
 							if (self.countdown === 0){		
-								game.laserShots.push({
-									whichPlayer: whichPlayer,
-									type: self.type,
-									shotX: self.x,
-									shotY: self.y,
-									targetX: enemyUnits[self.targetId].x,
-									targetY: enemyUnits[self.targetId].y,
-								});
-								self.countdown += self.reloadTime;
-								enemyUnits[self.targetId].hp -= self.damage;
-								if (enemyUnits[self.targetId].hp <= 0){
-									delete enemyUnits[self.targetId];
+								var id = Math.random();
+								var angleInRadians = Math.atan2(enemyUnits[self.targetId].y - self.y, enemyUnits[self.targetId].x - self.x);
+								var bullet = Bullet(id, self.type, self.x, self.y, angleInRadians, self.damage, self.range+10, self.targetId);
+								if (whichPlayer === 1) {
+									game.player1Bullets[id] = bullet;
+								} else {
+									game.player2Bullets[id] = bullet;
 								}
+								self.countdown += self.reloadTime;
 							}
 						}
 					} else  {
@@ -529,6 +534,87 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 		}
 	}
 	
+	return self;
+}
+
+var Bullet = function(id,type,x,y,angleInRadians,damage,range,targetId){
+	var self = {
+		id: id,
+		type: type,
+		x: x,
+		y: y,
+		angleInRadians: angleInRadians,
+		damage: damage,
+		range: range,
+		targetId: targetId,
+		speed: 15,
+		traveledDistance: 0,
+	}
+	
+	self.moveBullet = function(gameId, whichPlayer){
+		self.x += Math.cos(self.angleInRadians) * self.speed;
+		self.y += Math.sin(self.angleInRadians) * self.speed;
+		self.traveledDistance += self.speed; 
+		//console.log('traveled distance: ' + self.traveledDistance);
+		//console.log('range : ' + self.range);
+		if (self.traveledDistance > self.range){
+			//console.log('bullet to delete');
+			var game = GAME_LIST[gameId];
+			var bulletList;
+			if (whichPlayer === 1){
+				bulletList = game.player1Bullets;
+				//console.log('deleting player 1 bullet');
+				delete bulletList[self.id];
+			} else {
+				bulletList = game.player2Bullets;
+				//console.log('deleting player 2 bullet');
+				delete bulletList[self.id];
+			}
+		}
+	}
+	
+	self.checkCollisions = function(gameId, whichPlayer){
+		var game = GAME_LIST[gameId];
+		var bulletList;
+		var enemyUnits = {};
+		var enemyBase = null;
+		if (whichPlayer === 1){
+			bulletList = game.player1Bullets;
+			enemyUnits = game.player2Units;
+			enemyBase = game.player2Base;
+		} else {
+			bulletList = game.player2Bullets;
+			enemyUnits = game.player1Units;
+			enemyBase = game.player1Base;
+		}
+		
+		if(self.targetId === 'base'){
+			var distanceToTarget = Math.sqrt( (self.x-enemyBase.x)*(self.x-enemyBase.x) + (self.y-enemyBase.y)*(self.y-enemyBase.y) );
+			if (distanceToTarget < 20){
+				// small explosion - ...
+				enemyBase.hp -= self.damage;
+				if (enemyBase.hp <= 0){
+					// few big explosions - ...
+					self.targetId = ''; 
+				}
+			}
+		} else {
+			var enemyUnit = enemyUnits[self.targetId];
+			if (enemyUnit){
+				var distanceToTarget = Math.sqrt( (self.x-enemyUnit.x)*(self.x-enemyUnit.x) + (self.y-enemyUnit.y)*(self.y-enemyUnit.y) );
+				if (distanceToTarget < 10){
+					// small explosion - ...
+					enemyUnit.hp -= self.damage;
+					if (enemyUnit.hp <= 0){
+						// big explosion - ...
+						delete enemyUnits[self.targetId];
+						delete bulletList[self.id]; 
+					}
+				}
+			}
+		}
+	}
+
 	return self;
 }
 
@@ -948,11 +1034,12 @@ setInterval(function(){
 		var game = GAME_LIST[i];
 		if (game.started){
 			// update game state on server
-			game.laserShots = [];
+			game.newExplosions = []; // erase all old (already sent to client) explosions
 			game.continueProducingUnit();
 			game.spinBuildings();
 			game.addCredits();
 			game.updateUnits();
+			game.updateBullets();
 			game.checkIfWin();
 			
 			// send updates to client
@@ -965,7 +1052,9 @@ setInterval(function(){
 				mines: game.mines,
 				player1Units: game.player1Units,
 				player2Units: game.player2Units,
-				laserShots: game.laserShots,
+				newExplosions: game.newExplosions,
+				player1Bullets: game.player1Bullets,
+				player2Bullets: game.player2Bullets,
 			};
 			
 			SOCKET_LIST[game.player1Id].emit('gameUpdate', updatePack);

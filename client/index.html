@@ -115,6 +115,18 @@
 	var myUnits = null;
 	var enemyUnits = null;
 	
+	var keys = {
+		_1: false,
+		_2: false,
+		_3: false,
+		_4: false,
+		shift: false,
+		q: false,
+		w: false,
+		e: false,
+		r: false,
+	};
+	
 	var isBattleUnitSelected = false;
 	var isEngineerUnitSelected = false;
 	
@@ -427,6 +439,7 @@
 			unit3ButtonImage.src = '/client/img/unit3b.png';
 			unit4ButtonImage.src = '/client/img/unit4b.png';
 		}
+		document.getElementById('gameCanvas').focus();
 	});
 	
 	socket.on('gameEnded',function(data){
@@ -800,14 +813,54 @@
 			}
 		}
 		
-		for(i in data.laserShots){
-			var laserShot = data.laserShots[i];
-			gameCanvas.strokeStyle = '#ff0000';
-			gameCanvas.beginPath();
-			gameCanvas.moveTo(laserShot.shotX, laserShot.shotY);
-			gameCanvas.lineTo(laserShot.targetX, laserShot.targetY);
-			gameCanvas.stroke();
+		for (i in data.player1Bullets){
+			var bullet = data.player1Bullets[i];
+			var bulletLength;
+			if (bullet.type === 2){
+				gameCanvas.fillStyle = '#ED7811';
+				bulletLength = 4;
+			} else if (bullet.type === 3){
+				gameCanvas.fillStyle = '#2AE319';
+				bulletLength = 10;
+			} else if (bullet.type === 4){
+				gameCanvas.fillStyle = '#DEFA2A';
+				bulletLength = 7;
+			}
+			gameCanvas.save();
+			gameCanvas.translate(bullet.x,bullet.y);
+			gameCanvas.rotate(bullet.angleInRadians);
+			gameCanvas.fillRect(-bulletLength/2, 0, bulletLength, 1);
+			gameCanvas.restore();
 		}
+		for (i in data.player2Bullets){
+			var bullet = data.player2Bullets[i];
+			var bulletLength;
+			if (bullet.type === 2){
+				gameCanvas.fillStyle = '#ED7811';
+				bulletLength = 4;
+			} else if (bullet.type === 3){
+				gameCanvas.fillStyle = '#2AE319';
+				bulletLength = 10;
+			} else if (bullet.type === 4){
+				gameCanvas.fillStyle = '#DEFA2A';
+				bulletLength = 7;
+			}
+			gameCanvas.save();
+			gameCanvas.translate(bullet.x,bullet.y);
+			gameCanvas.rotate(bullet.angleInRadians);
+			gameCanvas.fillRect(-bulletLength/2, 0, bulletLength, 1);
+			gameCanvas.restore();
+		}
+		
+		// TODO: draw explosions
+		for (var i in data.newExplosions){
+			// add new particle explosion
+		}
+		
+		//for (var i in existingExplosions){
+			// animate existing explosion
+		//}
+		
 		
 		// cursor
 		if (whichCursor === 'neutral'){
@@ -1029,21 +1082,139 @@
 	}
 	
 	document.getElementById("gameCanvas").onkeydown = function(e){
-		e.preventDefault();
-	}
-	
-	document.getElementById("gameCanvas").onkeyup = function(e){
+		//e.preventDefault();
+		if (e.keyCode === 49){
+			keys['_1'] = true;
+		}
+		if (e.keyCode === 50){
+			keys['_2'] = true;
+		}
+		if (e.keyCode === 51){
+			keys['_3'] = true;
+		}
+		if (e.keyCode === 52){
+			keys['_4'] = true;
+		}
+		if (e.keyCode === 16){
+			keys['shift'] = true;
+		}
+		if (e.keyCode === 81){
+			keys['q'] = true;
+		}
+		if (e.keyCode === 87){
+			keys['w'] = true;
+		}
+		if (e.keyCode === 69){
+			keys['e'] = true;
+		}
+		if (e.keyCode === 82){
+			keys['r'] = true;
+		}
+		
 		// set group
 		if(isEngineerUnitSelected || isBattleUnitSelected){ // set group
-			if (e.keyCode === 112 || e.keyCode === 113 || e.keyCode === 114 || e.keyCode === 115){
-				var groupNumber = e.keyCode - 111;
+			if (keys['shift'] && (keys['_1'] || keys['_2'] || keys['_3'] || keys['_4']) ){
+				var groupNumber;
+				if (keys['_1']) {
+					groupNumber = 1;
+				} else if (keys['_2']) {
+					groupNumber = 2;
+				} else if (keys['_3']) {
+					groupNumber = 3;
+				} else if (keys['_4']) {
+					groupNumber = 4;
+				}
 				socket.emit('groupSet',{gameId: gameId, playerId: selfId, groupNumber: groupNumber});
 			}
 		}
+		
 		// call group
-		if (e.keyCode === 49 || e.keyCode === 50 || e.keyCode === 51 || e.keyCode === 52){
-			var groupNumber = e.keyCode - 48;
+		if (keys['_1'] || keys['_2'] || keys['_3'] || keys['_4']){
+			var groupNumber;
+			if (keys['_1']) {
+				groupNumber = 1;
+			} else if (keys['_2']) {
+				groupNumber = 2;
+			} else if (keys['_3']) {
+				groupNumber = 3;
+			} else if (keys['_4']) {
+				groupNumber = 4;
+			}
 			socket.emit('groupCalled',{gameId: gameId, playerId: selfId, groupNumber: groupNumber});
+		}
+		
+		// try to build unit 1
+		if(keys['q'] && credits >= unit1Cost && progressBarProgress.style.width === '0px'){
+			socket.emit('procudeUnit',{
+				gameId: gameId,
+				playerId: selfId,
+				type: 1,
+				credits: 500,
+			});
+			credits -= 500;
+		}
+		
+		// try to build unit 2
+		if(keys['w'] && credits >= unit2Cost && progressBarProgress.style.width === '0px'){
+			socket.emit('procudeUnit',{
+				gameId: gameId,
+				playerId: selfId,
+				type: 2,
+				credits: 250,
+			});
+			credits -= 250;
+		}
+		
+		// try to build unit 3
+		if(keys['e'] && credits >= unit3Cost && progressBarProgress.style.width === '0px'){
+			socket.emit('procudeUnit',{
+				gameId: gameId,
+				playerId: selfId,
+				type: 3,
+				credits: 750,
+			});
+			credits -= 750;
+		}
+		
+		// try to build unit 4
+		if(keys['r'] && credits >= unit4Cost && progressBarProgress.style.width === '0px'){
+			socket.emit('procudeUnit',{
+				gameId: gameId,
+				playerId: selfId,
+				type: 4,
+				credits: 1500,
+			});
+			credits -= 1500;
+		}
+	}
+	
+	document.getElementById("gameCanvas").onkeyup = function(e){
+		if (e.keyCode === 49){
+			keys['_1'] = false;
+		}
+		if (e.keyCode === 50){
+			keys['_2'] = false;
+		}
+		if (e.keyCode === 51){
+			keys['_3'] = false;
+		}
+		if (e.keyCode === 52){
+			keys['_4'] = false;
+		}
+		if (e.keyCode === 16){
+			keys['shift'] = false;
+		}
+		if (e.keyCode === 81){
+			keys['q'] = false;
+		}
+		if (e.keyCode === 87){
+			keys['w'] = false;
+		}
+		if (e.keyCode === 69){
+			keys['e'] = false;
+		}
+		if (e.keyCode === 82){
+			keys['r'] = false;
 		}
 	}
 	
