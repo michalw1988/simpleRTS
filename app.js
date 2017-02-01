@@ -213,6 +213,22 @@ var Game = function(id){
 	
 	self.checkIfWin = function(){
 		if(self.player2Base.hp <= 0){
+			if (self.player1CountdownToWin === 50){
+				self.newExplosions.push({
+					type: 1,
+					x: self.player2Base.x,
+					y: self.player2Base.y,
+					lifeSpan: 15,
+					delay: 0,
+				});
+				self.newExplosions.push({
+					type: 2,
+					x: self.player2Base.x,
+					y: self.player2Base.y,
+					lifeSpan: 15,
+					delay: 0,
+				});
+			}
 			self.player1CountdownToWin--;
 			if (self.player1CountdownToWin <= 0){
 				SOCKET_LIST[self.player1Id].emit('gameEnded',{message: "<div style='color: #3DF53D; margin-bottom: 2px;'><b>Congratulations!</b></div>You destroyed opponent's base."});
@@ -228,6 +244,22 @@ var Game = function(id){
 			}
 		}
 		if(self.player1Base.hp <= 0){
+			if (self.player2CountdownToWin === 50){
+				self.newExplosions.push({
+					type: 1,
+					x: self.player1Base.x,
+					y: self.player1Base.y,
+					lifeSpan: 15,
+					delay: 0,
+				});
+				self.newExplosions.push({
+					type: 2,
+					x: self.player1Base.x,
+					y: self.player1Base.y,
+					lifeSpan: 15,
+					delay: 0,
+				});
+			}
 			self.player2CountdownToWin--;
 			if (self.player2CountdownToWin <= 0){
 				SOCKET_LIST[self.player1Id].emit('gameEnded',{message: "<div style='color: #F72828; margin-bottom: 2px;'><b>Game over.</b></div>Your base was destroyed."});
@@ -446,6 +478,7 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 					}
 				} else {
 					self.activeOrderType = 'move';
+					self.targetId = '';
 					enemyBase.x = -100;
 					enemyBase.y = -100;
 				}
@@ -489,7 +522,7 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 						self.targetId = '';
 						//console.log('unit has lost target (unit is gone)');
 					} else { // fire (if reloaded);
-						if (self.countdown === 0){
+						if (self.countdown === 0 && enemyBase.hp > 0){
 							var id = Math.random();
 							var angleInRadians = Math.atan2(enemyBase.y - self.y, enemyBase.x - self.x);
 							var bullet = Bullet(id, self.type, self.x, self.y, angleInRadians, self.damage, self.range+10, 'base');
@@ -592,24 +625,53 @@ var Bullet = function(id,type,x,y,angleInRadians,damage,range,targetId){
 			var distanceToTarget = Math.sqrt( (self.x-enemyBase.x)*(self.x-enemyBase.x) + (self.y-enemyBase.y)*(self.y-enemyBase.y) );
 			if (distanceToTarget < 20){
 				// small explosion - ...
+				game.newExplosions.push({
+					type: 5,
+					x: self.x,
+					y: self.y,
+					lifeSpan: 12,
+					delay: 0,
+				});
 				enemyBase.hp -= self.damage;
 				if (enemyBase.hp <= 0){
-					// few big explosions - ...
 					self.targetId = ''; 
 				}
+				delete bulletList[self.id]; 
 			}
 		} else {
 			var enemyUnit = enemyUnits[self.targetId];
 			if (enemyUnit){
 				var distanceToTarget = Math.sqrt( (self.x-enemyUnit.x)*(self.x-enemyUnit.x) + (self.y-enemyUnit.y)*(self.y-enemyUnit.y) );
 				if (distanceToTarget < 10){
-					// small explosion - ...
 					enemyUnit.hp -= self.damage;
 					if (enemyUnit.hp <= 0){
 						// big explosion - ...
+						game.newExplosions.push({
+							type: 3,
+							x: self.x,
+							y: self.y,
+							lifeSpan: 15,
+							delay: 0,
+						});
+						game.newExplosions.push({
+							type: 4,
+							x: self.x,
+							y: self.y,
+							lifeSpan: 15,
+							delay: 0,
+						});
 						delete enemyUnits[self.targetId];
-						delete bulletList[self.id]; 
+					} else {
+						// small explosion - ...
+						game.newExplosions.push({
+							type: 5,
+							x: self.x,
+							y: self.y,
+							lifeSpan: 15,
+							delay: 0,
+						});
 					}
+					delete bulletList[self.id]; 
 				}
 			}
 		}
@@ -857,46 +919,49 @@ io.sockets.on('connection', function(socket){
 	
 	socket.on('orderForUnits',function(data){
 		var game = GAME_LIST[data.gameId];
-		var unitList = null;
-		if (data.playerId === game.player1Id){ // player 1 sent order
-			unitList = game.player1Units;
-		} else { // player 2 sent order
-			unitList = game.player2Units;
-		}
-		for (var i in unitList){
-			var unit = unitList[i];
-			if (unit.selected === true){
-				if (data.actionType === 'move'){
-					unit.activeOrderType = 'move';
-					unit.destinationX = data.destinationX;
-					unit.destinationY = data.destinationY;
-				} else if (data.actionType === 'capture'){
-					if (unit.type === 1){
-						unit.activeOrderType = 'capture';
-						unit.objectId = data.objectId;
-					} else {
+		
+		if(game){
+			var unitList = null;
+			if (data.playerId === game.player1Id){ // player 1 sent order
+				unitList = game.player1Units;
+			} else { // player 2 sent order
+				unitList = game.player2Units;
+			}
+			for (var i in unitList){
+				var unit = unitList[i];
+				if (unit.selected === true){
+					if (data.actionType === 'move'){
 						unit.activeOrderType = 'move';
+						unit.destinationX = data.destinationX;
+						unit.destinationY = data.destinationY;
+					} else if (data.actionType === 'capture'){
+						if (unit.type === 1){
+							unit.activeOrderType = 'capture';
+							unit.objectId = data.objectId;
+						} else {
+							unit.activeOrderType = 'move';
+						}
+						unit.destinationX = data.destinationX;
+						unit.destinationY = data.destinationY;
+					} else if (data.actionType === 'attackBase'){
+						if (unit.type !== 1){
+							unit.activeOrderType = 'attack';
+							unit.objectId = data.objectId;
+						} else {
+							unit.activeOrderType = 'move';
+						}
+						unit.destinationX = data.destinationX;
+						unit.destinationY = data.destinationY;
+					} else if (data.actionType === 'attackUnit'){
+						if (unit.type !== 1){
+							unit.activeOrderType = 'attack';
+							unit.objectId = data.objectId;
+						} else {
+							unit.activeOrderType = 'move';
+						}
+						unit.destinationX = data.destinationX;
+						unit.destinationY = data.destinationY;
 					}
-					unit.destinationX = data.destinationX;
-					unit.destinationY = data.destinationY;
-				} else if (data.actionType === 'attackBase'){
-					if (unit.type !== 1){
-						unit.activeOrderType = 'attack';
-						unit.objectId = data.objectId;
-					} else {
-						unit.activeOrderType = 'move';
-					}
-					unit.destinationX = data.destinationX;
-					unit.destinationY = data.destinationY;
-				} else if (data.actionType === 'attackUnit'){
-					if (unit.type !== 1){
-						unit.activeOrderType = 'attack';
-						unit.objectId = data.objectId;
-					} else {
-						unit.activeOrderType = 'move';
-					}
-					unit.destinationX = data.destinationX;
-					unit.destinationY = data.destinationY;
 				}
 			}
 		}

@@ -114,6 +114,7 @@
 	var mines = null;
 	var myUnits = null;
 	var enemyUnits = null;
+	var existingExplosions = {};
 	
 	var keys = {
 		_1: false,
@@ -190,6 +191,225 @@
 	Img.attackCursor = new Image();
 	Img.attackCursor.src = '/client/img/attack.png';
 	var whichCursor = 'neutral';
+	
+	
+	// classes
+	
+	var Particle = function(x, y, angle, speed, radius, colorR, colorG, colorB, colorA){
+		var self = {
+			x: x,
+			y: y,
+			angle: angle,
+			speed: speed,
+			radius: radius,
+			colorR: colorR,
+			colorG: colorG,
+			colorB: colorB,
+			colorA: colorA,
+		}
+		
+		self.drawParticle = function(){
+			gameCanvas.fillStyle = "rgba(" + self.colorR + "," + self.colorG + "," + self.colorB + "," + self.colorA + ")";
+			gameCanvas.save();
+			gameCanvas.beginPath();
+			gameCanvas.arc(self.x, self.y, self.radius, 0, Math.PI*2, false);
+			gameCanvas.fill();
+			gameCanvas.restore();
+		}
+		
+		return self;
+	}
+	
+	
+	var Explosion = function(id, type, x, y, lifeSpan, delay){
+		var self = {
+			id: id,
+			type: type,
+			x: x,
+			y: y,
+			lifeSpan: lifeSpan,
+			delay: delay,
+			particleList: [],
+			PARTICLE_COUNT: 0,
+			PARTICLE_START_SPEED_1: 0,
+			PARTICLE_START_SPEED_2: 0,
+			PARTICLE_RADIUS_1: 0,
+			PARTICLE_RADIUS_2: 0,
+			PARTICLE_COLOR_R_START: 0,
+			PARTICLE_COLOR_G_START: 0,
+			PARTICLE_COLOR_B_START: 0,
+			PARTICLE_COLOR_A_START: 0,
+			PARTICLE_SPEED_CHANGE: 0,
+			PARTICLE_RADIUS_CHANGE: 0,
+			PARTICLE_COLOR_R_CHANGE: 0,
+			PARTICLE_COLOR_G_CHANGE: 0,
+			PARTICLE_COLOR_B_CHANGE: 0,
+			PARTICLE_COLOR_A_CHANGE: 0,
+		}
+	
+		self.init = function(){
+			if (self.type === 1) {	// ship explosion
+			    self.PARTICLE_COUNT = 25;
+			    self.PARTICLE_START_SPEED_1 = 3;
+			    self.PARTICLE_START_SPEED_2 = 0;
+			    self.PARTICLE_RADIUS_1 = 10;
+			    self.PARTICLE_RADIUS_2 = 20;
+			    self.PARTICLE_COLOR_R_START = 255;
+			    self.PARTICLE_COLOR_G_START = 255;
+			    self.PARTICLE_COLOR_B_START = 170;
+			    self.PARTICLE_COLOR_A_START = 1;
+			    self.PARTICLE_SPEED_CHANGE = 0.83;
+			    self.PARTICLE_RADIUS_CHANGE = 0.92;
+			    self.PARTICLE_COLOR_R_CHANGE = 0;
+			    self.PARTICLE_COLOR_G_CHANGE = -8;
+			    self.PARTICLE_COLOR_B_CHANGE = -40;
+			    self.PARTICLE_COLOR_A_CHANGE = 0.87;
+			} else if (self.type === 2) {
+			    self.PARTICLE_COUNT = 1;
+			    self.PARTICLE_START_SPEED_1 = 0;
+			    self.PARTICLE_START_SPEED_2 = 0;
+			    self.PARTICLE_RADIUS_1 = 0;
+			    self.PARTICLE_RADIUS_2 = 17;
+			    self.PARTICLE_COLOR_R_START = 255;
+			    self.PARTICLE_COLOR_G_START = 100;
+			    self.PARTICLE_COLOR_B_START = 0;
+			    self.PARTICLE_COLOR_A_START = 1;
+			    self.PARTICLE_SPEED_CHANGE = 1;
+			    self.PARTICLE_RADIUS_CHANGE = 1.1;
+			    self.PARTICLE_COLOR_R_CHANGE = 0;
+			    self.PARTICLE_COLOR_G_CHANGE = -80;
+			    self.PARTICLE_COLOR_B_CHANGE = -0;
+			    self.PARTICLE_COLOR_A_CHANGE = 0.75;
+			} else if (self.type === 3) { // big missile explosion
+				/*
+			    self.PARTICLE_COUNT = 30;
+			    self.PARTICLE_START_SPEED_1 = 2;
+			    self.PARTICLE_START_SPEED_2 = 0;
+			    self.PARTICLE_RADIUS_1 = 6;
+			    self.PARTICLE_RADIUS_2 = 12;
+			    self.PARTICLE_COLOR_R_START = 255;
+			    self.PARTICLE_COLOR_G_START = 255;
+			    self.PARTICLE_COLOR_B_START = 170;
+			    self.PARTICLE_COLOR_A_START = 1;
+			    self.PARTICLE_SPEED_CHANGE = 0.83;
+			    self.PARTICLE_RADIUS_CHANGE = 0.92;
+			    self.PARTICLE_COLOR_R_CHANGE = 0;
+			    self.PARTICLE_COLOR_G_CHANGE = -8;
+			    self.PARTICLE_COLOR_B_CHANGE = -40;
+			    self.PARTICLE_COLOR_A_CHANGE = 0.87;
+				*/
+				self.PARTICLE_COUNT = 10;
+				self.PARTICLE_START_SPEED_1 = 1.2;
+			    self.PARTICLE_START_SPEED_2 = 0.1;
+			    self.PARTICLE_RADIUS_1 = 3;
+			    self.PARTICLE_RADIUS_2 = 10;
+			    self.PARTICLE_COLOR_R_START = 255;
+			    self.PARTICLE_COLOR_G_START = 255;
+			    self.PARTICLE_COLOR_B_START = 170;
+			    self.PARTICLE_COLOR_A_START = 1;
+			    self.PARTICLE_SPEED_CHANGE = 0.83;
+			    self.PARTICLE_RADIUS_CHANGE = 0.92;
+			    self.PARTICLE_COLOR_R_CHANGE = 0;
+			    self.PARTICLE_COLOR_G_CHANGE = -20;
+			    self.PARTICLE_COLOR_B_CHANGE = -40;
+			    self.PARTICLE_COLOR_A_CHANGE = 0.87;
+			} else if (self.type === 4) { 
+			    self.PARTICLE_COUNT = 1;
+				self.PARTICLE_START_SPEED_1 = 0;
+				self.PARTICLE_START_SPEED_2 = 0;
+				self.PARTICLE_RADIUS_1 = 0;
+				self.PARTICLE_RADIUS_2 = 7;
+				self.PARTICLE_COLOR_R_START = 255;
+				self.PARTICLE_COLOR_G_START = 100;
+				self.PARTICLE_COLOR_B_START = 0;
+				self.PARTICLE_COLOR_A_START = 1;
+				self.PARTICLE_SPEED_CHANGE = 1;
+				self.PARTICLE_RADIUS_CHANGE = 1.1;
+				self.PARTICLE_COLOR_R_CHANGE = 0;
+				self.PARTICLE_COLOR_G_CHANGE = -80;
+				self.PARTICLE_COLOR_B_CHANGE = -0;
+				self.PARTICLE_COLOR_A_CHANGE = 0.8;
+			} else if (self.type === 5) { // small missile
+			    //self.PARTICLE_COUNT = 20;
+			    self.PARTICLE_COUNT = 4;
+			    //self.PARTICLE_START_SPEED_1 = 1;
+			    self.PARTICLE_START_SPEED_1 = 0.5;
+			    //self.PARTICLE_START_SPEED_2 = 0;
+			    self.PARTICLE_START_SPEED_2 = 0.1;
+			    //self.PARTICLE_RADIUS_1 = 4;
+			    self.PARTICLE_RADIUS_1 = 2;
+			    //self.PARTICLE_RADIUS_2 = 8;
+			    self.PARTICLE_RADIUS_2 = 5;
+			    self.PARTICLE_COLOR_R_START = 255;
+			    self.PARTICLE_COLOR_G_START = 255;
+			    self.PARTICLE_COLOR_B_START = 170;
+			    self.PARTICLE_COLOR_A_START = 1;
+			    self.PARTICLE_SPEED_CHANGE = 0.83;
+			    self.PARTICLE_RADIUS_CHANGE = 0.92;
+			    self.PARTICLE_COLOR_R_CHANGE = 0;
+			    //self.PARTICLE_COLOR_G_CHANGE = -8;
+			    self.PARTICLE_COLOR_G_CHANGE = -20;
+			    self.PARTICLE_COLOR_B_CHANGE = -40;
+			    self.PARTICLE_COLOR_A_CHANGE = 0.87;
+			} else if (self.type === 6) { 
+			    self.PARTICLE_COUNT = 1;
+			    self.PARTICLE_START_SPEED_1 = 0;
+			    self.PARTICLE_START_SPEED_2 = 0;
+			    self.PARTICLE_RADIUS_1 = 0;
+			    self.PARTICLE_RADIUS_2 = 10;
+			    self.PARTICLE_COLOR_R_START = 255;
+			    self.PARTICLE_COLOR_G_START = 100;
+			    self.PARTICLE_COLOR_B_START = 0;
+				self.PARTICLE_COLOR_A_START = 1;
+			    self.PARTICLE_SPEED_CHANGE = 1;
+			    self.PARTICLE_RADIUS_CHANGE = 1.05;
+			    self.PARTICLE_COLOR_R_CHANGE = 0;
+			    self.PARTICLE_COLOR_G_CHANGE = -80;
+			    self.PARTICLE_COLOR_B_CHANGE = -0;
+			    self.PARTICLE_COLOR_A_CHANGE = 0.8;
+			}
+			// add start particles
+			for (var i = 0; i < self.PARTICLE_COUNT; i++) {
+				var particle = Particle(
+					self.x,
+					self.y,
+					Math.floor(Math.random() * 360),
+					Math.random() * self.PARTICLE_START_SPEED_1 + self.PARTICLE_START_SPEED_2,
+					Math.random() * self.PARTICLE_RADIUS_1 + self.PARTICLE_RADIUS_2,
+					self.PARTICLE_COLOR_R_START,
+					self.PARTICLE_COLOR_G_START,
+					self.PARTICLE_COLOR_B_START,
+					self.PARTICLE_COLOR_A_START
+				);
+				self.particleList.push(particle);
+			}
+		}
+	
+		self.drawParticles = function(){
+			for (var i = 0; i < self.PARTICLE_COUNT; i++) {
+				self.particleList[i].drawParticle();
+			}
+			self.recalculateValues();
+		}
+		
+		self.recalculateValues = function(){
+			self.lifeSpan--;
+			for (var i = 0; i < self.PARTICLE_COUNT; i++) {
+				var radians = self.particleList[i].angle * Math.PI / 180;
+				var speed = self.particleList[i].speed;
+				self.particleList[i].x += Math.sin(radians) * speed - Math.cos(radians) * speed;
+				self.particleList[i].y += Math.cos(radians) * speed + Math.sin(radians) * speed;
+				self.particleList[i].speed *= self.PARTICLE_SPEED_CHANGE;
+				self.particleList[i].radius *= self.PARTICLE_RADIUS_CHANGE;
+				self.particleList[i].colorR += self.PARTICLE_COLOR_R_CHANGE;
+				self.particleList[i].colorG += self.PARTICLE_COLOR_G_CHANGE;
+				self.particleList[i].colorB += self.PARTICLE_COLOR_B_CHANGE;
+				self.particleList[i].colorA *= self.PARTICLE_COLOR_A_CHANGE;
+			}
+		}
+	
+		return self;
+	}
 	
 	
 	// login screen
@@ -852,14 +1072,28 @@
 			gameCanvas.restore();
 		}
 		
-		// TODO: draw explosions
 		for (var i in data.newExplosions){
-			// add new particle explosion
+			var expl = data.newExplosions[i];
+			var id = Math.random();
+			var explosion = Explosion(id, expl.type, expl.x, expl.y, expl.lifeSpan, expl.delay);
+			explosion.init();
+			
+			existingExplosions[id] = explosion;
+			//console.log('Explosions count: ' + Object.keys(existingExplosions).length);
 		}
 		
-		//for (var i in existingExplosions){
-			// animate existing explosion
-		//}
+		for (var i in existingExplosions){
+			var explosion = existingExplosions[i];
+			if (explosion.delay === 0) {
+				explosion.drawParticles();
+			} else {
+				explosion.delay--;
+			}
+			if (explosion.lifeSpan < 0) {
+				delete existingExplosions[explosion.id];
+				//console.log('Explosions count: ' + Object.keys(existingExplosions).length);
+			}
+		}
 		
 		
 		// cursor
@@ -1002,11 +1236,11 @@
 			
 			var destinations = [];
 			
-			console.log('sending line - from: ' + mouseStartX + ', ' + mouseStartY + ' to: ' + mouseEndX + ', ' + mouseEndY);
-			console.log('selected units: ' + numberOfSelectedUnits);
-			console.log('line length: ' + lineLength);
-			console.log('line angle: ' + lineAngleInRadians / Math.PI * 180);
-			console.log('there can be ' + howManyUnitsInSingleLine + ' unit in single line, so we need ' + howManyLines + ' lines.');
+			//console.log('sending line - from: ' + mouseStartX + ', ' + mouseStartY + ' to: ' + mouseEndX + ', ' + mouseEndY);
+			//console.log('selected units: ' + numberOfSelectedUnits);
+			//console.log('line length: ' + lineLength);
+			//console.log('line angle: ' + lineAngleInRadians / Math.PI * 180);
+			//console.log('there can be ' + howManyUnitsInSingleLine + ' unit in single line, so we need ' + howManyLines + ' lines.');
 			
 			for (var n = 0; n < howManyLines; n++){
 				if (n < howManyFullLines){
@@ -1018,7 +1252,7 @@
 							x: x,
 							y: y,
 						});
-						console.log('unit in line ' + (n+1) + ' on position: ' + x + ', ' + y);
+						//console.log('unit in line ' + (n+1) + ' on position: ' + x + ', ' + y);
 					}
 				} else {
 					var unitsLeft = numberOfSelectedUnits - howManyFullLines*howManyUnitsInSingleLine;
@@ -1030,7 +1264,7 @@
 							x: x,
 							y: y,
 						});
-						console.log('unit in line ' + (n+1) + ' on position: ' + x + ', ' + y);
+						//console.log('unit in line ' + (n+1) + ' on position: ' + x + ', ' + y);
 					}
 				}
 			}
