@@ -112,6 +112,7 @@
 	var myBase = null;
 	var enemyBase = null;
 	var mines = null;
+	var turrets = null;
 	var myUnits = null;
 	var enemyUnits = null;
 	var existingExplosions = {};
@@ -669,6 +670,7 @@
 	
 	socket.on('gameUpdate',function(data){
 		mines = data.mines;
+		turrets = data.turrets;
 		if(selfId === data.player1Id){
 			myBase = data.player1Base;
 			enemyBase = data.player2Base;
@@ -747,6 +749,46 @@
 				var color = 'rgba(' + r +',' + g + ',' + b + ',' + a + ')';
 				gameCanvas.fillStyle = color;
 				gameCanvas.fillText("+50", mine.x-10, mine.y-textMoveFactor);
+			}
+		}
+		
+		for (var i in data.turrets){
+			var turret = data.turrets[i];
+			gameCanvas.save();
+			gameCanvas.translate(turret.x,turret.y);
+			gameCanvas.rotate(turret.spin * Math.PI/180);
+			if (turret.owner === 0){
+				gameCanvas.drawImage(Img.buildings,170,0,25,25,-12.5,-12.5,25,25);
+			} else if (turret.owner === 1){
+				gameCanvas.drawImage(Img.buildings,200,0,25,25,-12.5,-12.5,25,25);
+			} else if (turret.owner === 2){
+				gameCanvas.drawImage(Img.buildings,230,0,25,25,-12.5,-12.5,25,25);
+			}
+			gameCanvas.restore();
+			
+			gameCanvas.save();
+			gameCanvas.translate(turret.x,turret.y);
+			gameCanvas.rotate(turret.gunAngle * Math.PI/180);
+			if (turret.owner === 0){
+				gameCanvas.drawImage(Img.buildings,260,1,7,22,-3.5,-11,7,22);
+			} else if (turret.owner === 1){
+				gameCanvas.drawImage(Img.buildings,270,1,7,22,-3.5,-11,7,22);
+			} else if (turret.owner === 2){
+				gameCanvas.drawImage(Img.buildings,280,1,7,22,-3.5,-11,7,22);
+			}
+			gameCanvas.restore();
+				
+			if (mouseEndX > turret.x-10 &&
+					mouseEndX < turret.x+10 &&
+					mouseEndY > turret.y-10 &&
+					mouseEndY < turret.y+10
+			){
+				gameCanvas.strokeStyle = 'rgba(255, 0, 0, 0.2)';
+				gameCanvas.save();
+				gameCanvas.beginPath();
+				gameCanvas.arc(turret.x, turret.y, turret.range, 0, Math.PI*2, false);
+				gameCanvas.stroke();
+				gameCanvas.restore();
 			}
 		}
 		
@@ -977,6 +1019,18 @@
 					}
 				}
 			}
+			for (var i in turrets){
+				var turret = turrets[i];
+				if (mouseEndX > turret.x-10 &&
+					mouseEndX < turret.x+10 &&
+					mouseEndY > turret.y-10 &&
+					mouseEndY < turret.y+10
+				){
+					if(isEngineerUnitSelected){
+						whichCursor = 'capture';
+					}
+				}
+			}
 			if (mouseEndX > enemyBase.x-20 &&
 				mouseEndX < enemyBase.x+20 &&
 				mouseEndY > enemyBase.y-20 &&
@@ -1169,6 +1223,19 @@
 							if(isEngineerUnitSelected){
 								actionType = 'capture';
 								objectId = mine.id;
+							}
+						}
+					}
+					for (var i in turrets){
+						var turret = turrets[i];
+						if (mouseEndX > turret.x-10 &&
+							mouseEndX < turret.x+10 &&
+							mouseEndY > turret.y-10 &&
+							mouseEndY < turret.y+10
+						){
+							if(isEngineerUnitSelected){
+								actionType = 'capture';
+								objectId = turret.id;
 							}
 						}
 					}

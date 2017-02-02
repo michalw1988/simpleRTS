@@ -46,6 +46,11 @@ var Game = function(id){
 			{id: Math.random(), x: 450, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
 			{id: Math.random(), x: 750, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
 		],
+		turrets: [
+			{id:Math.random(), x:300, y:284, owner:2, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+			{id:Math.random(), x:600, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+			{id:Math.random(), x:900, y:284, owner:1, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+		],
 		player1ProductionProgress: 0,
 		player2ProductionProgress: 0,
 		player1ProductionType: 0,
@@ -69,6 +74,11 @@ var Game = function(id){
 			mine.spin += 0.5;
 			if (mine.spin >= 360) mine.spin = 0;
 		}
+		for (var i in self.turrets){
+			var turret = self.turrets[i];
+			turret.spin += 0.25;
+			if (turret.spin >= 360) turret.spin = 0;
+		}
 	}
 	
 	self.addCredits = function(){
@@ -82,6 +92,57 @@ var Game = function(id){
 				self.player1Credits += 50;
 			} else if (mine.countdown === 30 && mine.owner === 2){
 				self.player2Credits += 50;
+			}
+		}
+	}
+	
+	self.fireTurrets = function(whichPlayer){
+		var enemyUnits = {};
+		if (whichPlayer === 1){
+			enemyUnits = self.player2Units;
+		} else {
+			enemyUnits = self.player1Units;
+		}
+		
+		for(var n in self.turrets){
+			var turret = self.turrets[n];
+			
+			if (turret.owner === whichPlayer){
+				if(turret.targetId === ''){
+					for (var i in enemyUnits){
+						var enemyUnit = enemyUnits[i];
+						var distanceToEnemyUnit = Math.sqrt( (turret.x-enemyUnit.x)*(turret.x-enemyUnit.x) + (turret.y-enemyUnit.y)*(turret.y-enemyUnit.y) );
+						if (distanceToEnemyUnit <= turret.range){
+							turret.targetId = enemyUnit.id;
+						}
+					}
+				} else { 
+					if (enemyUnits[turret.targetId]){
+						var enemyUnit = enemyUnits[turret.targetId];
+						var distanceToTargetedUnit = Math.sqrt( (turret.x-enemyUnit.x)*(turret.x-enemyUnit.x) + (turret.y-enemyUnit.y)*(turret.y-enemyUnit.y) );
+						if(distanceToTargetedUnit > turret.range){ // unit has lost target (unit too far)
+							turret.targetId = '';
+						} else { // fire (if reloaded);
+							var angleInRadians = Math.atan2(enemyUnits[turret.targetId].y - turret.y, enemyUnits[turret.targetId].x - turret.x);
+							turret.gunAngle = angleInRadians * 180/Math.PI - 90;
+							if (turret.countdown === 0){	
+								var id = Math.random();
+								var bullet = Bullet(id, 3, turret.x, turret.y, angleInRadians, turret.damage, turret.range+10, turret.targetId);
+								if (whichPlayer === 1) {
+									self.player1Bullets[id] = bullet;
+								} else {
+									self.player2Bullets[id] = bullet;
+								}
+								turret.countdown += turret.reloadTime;
+							}
+						}
+					} else  {
+						turret.targetId = ''; // unit has lost target (unit is gone)
+					}
+				}
+				if (turret.countdown !== 0){
+					turret.countdown--;
+				}
 			}
 		}
 	}
@@ -366,6 +427,17 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 					self.destinationY = mine.y + dist * Math.cos(angle * Math.PI / 180);
 				}
 			}
+			// avoid turrets
+			for (var i in game.turrets){
+				var turret = game.turrets[i];
+				var destinationPointDistanceToTurret = Math.sqrt( (turret.x-self.destinationX)*(turret.x-self.destinationX) + (turret.y-self.destinationY)*(turret.y-self.destinationY) );
+				if(destinationPointDistanceToTurret < 20){
+					var dist = 20;
+					var angle = Math.random()*360;
+					self.destinationX = turret.x + dist * Math.sin(angle * Math.PI / 180);
+					self.destinationY = turret.y + dist * Math.cos(angle * Math.PI / 180);
+				}
+			}
 			//  avoid player 1 units
 			for (var i in game.player1Units){
 				var unit = game.player1Units[i];
@@ -404,24 +476,31 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 		} else if(self.activeOrderType === 'capture'){
 			self.moving = true;
 			
-			var mineToCapture = '';
+			var objectToCapture = '';
 			for (var i in game.mines){
 				var mine = game.mines[i];
 				if(mine.id === self.objectId){
-					mineToCapture = mine;
+					objectToCapture = mine;
 				}
 			}
-			if(mineToCapture.owner === whichPlayer){ // if the mine is already mine
+			if (objectToCapture === '')
+			for (var i in game.turrets){
+				var turret = game.turrets[i];
+				if(turret.id === self.objectId){
+					objectToCapture = turret;
+				}
+			}
+			if(objectToCapture.owner === whichPlayer){ // if the mine/turret is already mine
 				self.activeOrderType = 'move';
-			} else { // go towards the mine
+			} else { // go towards the mine/turret
 				var distanceToDestination = Math.sqrt( (self.x-self.destinationX)*(self.x-self.destinationX) + (self.y-self.destinationY)*(self.y-self.destinationY) );
 				if (distanceToDestination > 3){
 					var angleInRadians = Math.atan2(self.destinationY - self.y, self.destinationX - self.x);
 					self.angle = angleInRadians;
 					self.x += Math.cos(angleInRadians) * self.speed;
 					self.y += Math.sin(angleInRadians) * self.speed;
-				} else { // capture the mine
-					mineToCapture.owner = whichPlayer;
+				} else { // capture the mine/turret
+					objectToCapture.owner = whichPlayer;
 					if (whichPlayer === 1){
 						delete game.player1Units[self.id];
 					} else {
@@ -1103,6 +1182,8 @@ setInterval(function(){
 			game.continueProducingUnit();
 			game.spinBuildings();
 			game.addCredits();
+			game.fireTurrets(1);
+			game.fireTurrets(2);
 			game.updateUnits();
 			game.updateBullets();
 			game.checkIfWin();
@@ -1115,6 +1196,7 @@ setInterval(function(){
 				player1Base: game.player1Base,
 				player2Base: game.player2Base,
 				mines: game.mines,
+				turrets: game.turrets,
 				player1Units: game.player1Units,
 				player2Units: game.player2Units,
 				newExplosions: game.newExplosions,
