@@ -215,6 +215,34 @@ body {
 	text-align: left;
 }
 
+#gameOptionsDiv{
+	background-color: #D8E4E8;
+	width: 290px;
+	font-size: 14px;
+	color: #336699;
+	margin-left: 3px;
+	padding: 2px;
+}
+
+#gameOprtionsHr{
+	 border: 0px;
+	 height: 2px;
+	 margin-top: 3px;
+	 margin-bottom: 3px;
+	 background: #cccccc;
+}
+
+#mapDiv{
+	background-color: #D8E4E8;
+	width: 290px;
+	height: 420px;
+	font-size: 14px;
+	color: #336699;
+	margin-left: 3px;
+	padding: 2px;
+}
+
+
 #roomChatContainerDiv{
 	position: absolute;
 	top: 57px;

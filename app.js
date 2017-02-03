@@ -32,6 +32,8 @@ var Game = function(id){
 		player2Id:"",
 		ready:false,
 		started:false,
+		showRanges: true,
+		repairUnits: true,
 		player1Credits: 5000,
 		player2Credits: 5000,
 		player1Base: {x: 100, y: 284, hp: 5000, hpMax: 5000, spin: Math.random()*360,},
@@ -47,9 +49,9 @@ var Game = function(id){
 			{id: Math.random(), x: 750, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
 		],
 		turrets: [
-			{id:Math.random(), x:300, y:284, owner:2, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+			{id:Math.random(), x:300, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
 			{id:Math.random(), x:600, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
-			{id:Math.random(), x:900, y:284, owner:1, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+			{id:Math.random(), x:900, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
 		],
 		player1ProductionProgress: 0,
 		player2ProductionProgress: 0,
@@ -127,7 +129,7 @@ var Game = function(id){
 							turret.gunAngle = angleInRadians * 180/Math.PI - 90;
 							if (turret.countdown === 0){	
 								var id = Math.random();
-								var bullet = Bullet(id, 3, turret.x, turret.y, angleInRadians, turret.damage, turret.range+10, turret.targetId);
+								var bullet = Bullet(id, 5, turret.x, turret.y, angleInRadians, turret.damage, turret.range+10, turret.targetId);
 								if (whichPlayer === 1) {
 									self.player1Bullets[id] = bullet;
 								} else {
@@ -545,7 +547,7 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 					self.destinationX = enemyBase.x;
 					self.destinationY = enemyBase.y;
 					var distanceToEnemyBase = Math.sqrt( (self.x-enemyBase.x)*(self.x-enemyBase.x) + (self.y-enemyBase.y)*(self.y-enemyBase.y) );
-					if (distanceToEnemyBase > self.range){
+					if (distanceToEnemyBase > self.range+20){
 						self.moving = true;
 						var angleInRadians = Math.atan2(enemyBase.y - self.y, enemyBase.x - self.x);
 						self.angle = angleInRadians;
@@ -582,7 +584,7 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 			if(self.targetId === ''){
 				// target base
 				var distanceToEnemyBase = Math.sqrt( (self.x-enemyBase.x)*(self.x-enemyBase.x) + (self.y-enemyBase.y)*(self.y-enemyBase.y) );
-				if (distanceToEnemyBase <= self.range && enemyBase.hp > 0){
+				if (distanceToEnemyBase <= self.range+20 && enemyBase.hp > 0){
 					self.targetId = 'base';
 					//console.log('enemy base is now a target');
 				}
@@ -597,7 +599,7 @@ var Unit = function(id,type,x,y,destinationX,destinationY){
 			} else {
 				if (self.targetId === 'base'){
 					var distanceToTargetedBase = Math.sqrt( (self.x-enemyBase.x)*(self.x-enemyBase.x) + (self.y-enemyBase.y)*(self.y-enemyBase.y) );
-					if(distanceToTargetedBase > self.range){ // unit has lost target (base too far)
+					if(distanceToTargetedBase > self.range+20){ // unit has lost target (base too far)
 						self.targetId = '';
 						//console.log('unit has lost target (unit is gone)');
 					} else { // fire (if reloaded);
@@ -873,6 +875,24 @@ io.sockets.on('connection', function(socket){
 		updateGamePlayersList(data.gameId);
 		updateLobbyGamesList();
 		SOCKET_LIST[socket.id].emit('gameID',{id:data.gameId});
+		var game = GAME_LIST[data.gameId];
+		SOCKET_LIST[socket.id].emit('gameSettingsChanged',{showRanges: game.showRanges, repairUnits: game.repairUnits});
+		//console.log('showRanges: ' + game.showRanges + ' | repairUnits: ' + game.repairUnits);
+	});
+	
+	socket.on('gameSettings',function(data){
+		var game = GAME_LIST[data.gameId];
+		var otherPlayerId;
+		if (game.player1Id === data.playerId){
+			otherPlayerId = game.player2Id;
+		} else {
+			otherPlayerId = game.player1Id;
+		}
+		game.showRanges = data.showRanges;
+		game.repairUnits = data.repairUnits;
+		if(SOCKET_LIST[otherPlayerId]){
+			SOCKET_LIST[otherPlayerId].emit('gameSettingsChanged',{showRanges: data.showRanges, repairUnits: data.repairUnits});
+		}
 	});
 	
 	socket.on('roomChatMessage',function(data){
