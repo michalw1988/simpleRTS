@@ -926,7 +926,7 @@ io.sockets.on('connection', function(socket){
 		GAME_LIST[id] = game;
 		PLAYER_LIST[socket.id].gameId = id;
 		game.player1Id = socket.id;
-		game.setMap('map4');
+		game.setMap('map1');
 		updateGamePlayersList(id);
 		updateLobbyGamesList();
 		SOCKET_LIST[socket.id].emit('gameID',{id:id});
@@ -960,7 +960,7 @@ io.sockets.on('connection', function(socket){
 		updateLobbyGamesList();
 		SOCKET_LIST[socket.id].emit('gameID',{id:data.gameId});
 		var game = GAME_LIST[data.gameId];
-		SOCKET_LIST[socket.id].emit('gameSettingsChanged',{showRanges: game.showRanges, repairUnits: game.repairUnits});
+		SOCKET_LIST[socket.id].emit('gameSettingsChanged',{showRanges: game.showRanges, repairUnits: game.repairUnits, map: game.map});
 		//console.log('showRanges: ' + game.showRanges + ' | repairUnits: ' + game.repairUnits);
 	});
 	
@@ -974,8 +974,10 @@ io.sockets.on('connection', function(socket){
 		}
 		game.showRanges = data.showRanges;
 		game.repairUnits = data.repairUnits;
+		game.map = data.map;
+		game.setMap(data.map);
 		if(SOCKET_LIST[otherPlayerId]){
-			SOCKET_LIST[otherPlayerId].emit('gameSettingsChanged',{showRanges: data.showRanges, repairUnits: data.repairUnits});
+			SOCKET_LIST[otherPlayerId].emit('gameSettingsChanged',{showRanges: data.showRanges, repairUnits: data.repairUnits, map: game.map});
 		}
 	});
 	

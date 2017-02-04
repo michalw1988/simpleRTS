@@ -501,19 +501,19 @@
 	
 	var mapRadioButtonsOnClick = function(value){
 		map = value;
-		alert(value);
+		socket.emit('gameSettings',{gameId: gameId, playerId: selfId, showRanges: showRanges, repairUnits: repairUnits, map: map});
 	}
 	
 	showRangesCheckbox.onclick = function(){
 		showRanges = showRangesCheckbox.checked;
 		repairUnits = repairUnitsCheckbox.checked;
-		socket.emit('gameSettings',{gameId: gameId, playerId: selfId, showRanges: showRanges, repairUnits: repairUnits, map: 0});
+		socket.emit('gameSettings',{gameId: gameId, playerId: selfId, showRanges: showRanges, repairUnits: repairUnits, map: map});
 	}
 	
 	repairUnitsCheckbox.onclick = function(){
 		showRanges = showRangesCheckbox.checked;
 		repairUnits = repairUnitsCheckbox.checked;
-		socket.emit('gameSettings',{gameId: gameId, playerId: selfId, showRanges: showRanges, repairUnits: repairUnits, map: 0});
+		socket.emit('gameSettings',{gameId: gameId, playerId: selfId, showRanges: showRanges, repairUnits: repairUnits, map: map});
 	}
 	
 	lobbyChatInput.onkeyup = function(e){
@@ -699,8 +699,16 @@
 	socket.on('gameSettingsChanged',function(data){
 		showRanges = data.showRanges;
 		repairUnits = data.repairUnits;
+		map = data.map;
 		showRangesCheckbox.checked = data.showRanges;
 		repairUnitsCheckbox.checked = data.repairUnits;
+		
+		for(var i in mapRadioButtons){
+			var radioButton = mapRadioButtons[i];
+			if (radioButton.value === map){
+				radioButton.checked = true;
+			}
+		}
 		//alert('showRanges: ' + data.showRanges + ' | repairUnits: ' + data.repairUnits);
 		//console.log('changed settings received - showRanges: ' + data.showRanges + ' | repairUnits: ' + data.repairUnits);
 	});
