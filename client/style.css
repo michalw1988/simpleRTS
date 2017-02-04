@@ -240,8 +240,8 @@ body {
 	color: #336699;
 	margin-left: 3px;
 	padding: 2px;
+	overflow-y:scroll;
 }
-
 
 #roomChatContainerDiv{
 	position: absolute;

@@ -54,13 +54,30 @@
 		
 		<b>Map</b>
 		<div id="mapDiv">
-		<button id="map1Button">Map 1</button>
-		<br>
-		<button id="map2Button">Map 2</button>
-		<br>
-		<button id="map3Button">Map 3</button>
-		<br>
-		<button id="map4Button">Map 4</button>
+			<table>
+				<tbody>
+					<tr>
+						<td><input type="radio" name="mapRadioButton" value="map1" id="map1RadioButton" onclick="mapRadioButtonsOnClick('map1')"></td>
+						<td><label for="map1RadioButton"><img src="client/img/map1.jpg"></label></td>
+					</tr>
+					<tr>
+						<td><input type="radio" name="mapRadioButton" value="map2" id="map2RadioButton" onclick="mapRadioButtonsOnClick('map2')"></td>
+						<td><label for="map2RadioButton"><img src="client/img/map1.jpg"></label></td>
+					</tr>
+					<tr>
+						<td><input type="radio" name="mapRadioButton" value="map3" id="map3RadioButton" onclick="mapRadioButtonsOnClick('map3')"></td>
+						<td><label for="map3RadioButton"><img src="client/img/map1.jpg"></label></td>
+					</tr>
+					<tr>
+						<td><input type="radio" name="mapRadioButton" value="map4" id="map4RadioButton" onclick="mapRadioButtonsOnClick('map4')"></td>
+						<td><label for="map4RadioButton"><img src="client/img/map1.jpg"></label></td>
+					</tr>
+					<tr>
+						<td><input type="radio" name="mapRadioButton" value="map5" id="map5RadioButton" onclick="mapRadioButtonsOnClick('map5')"></td>
+						<td><label for="map5RadioButton"><img src="client/img/map1.jpg"></label></td>
+					</tr>
+				</tbody>
+			</table>
 		</div>
 		
 
@@ -120,6 +137,7 @@
 	var unit4Cost = 1500;
 	var showRanges = true;
 	var repairUnits = true;
+	var map;
 	
 	var mouseStartX = 0;
 	var mouseStartY = 0;
@@ -180,6 +198,7 @@
 	var readyGameButton = document.getElementById("readyGameButton");
 	var showRangesCheckbox = document.getElementById("showRangesCheckbox");
 	var repairUnitsCheckbox = document.getElementById("repairUnitsCheckbox");
+	var mapRadioButtons = document.getElementsByName("mapRadioButton");
 	
 	var gameDiv = document.getElementById("gameDiv");
 	var creditsDiv = document.getElementById("creditsDiv");
@@ -472,7 +491,17 @@
 		repairUnitsCheckbox.checked = true;
 		showRanges = true;
 		repairUnits = true;
+		for(var i = 0; i < mapRadioButtons.length; i++){
+			mapRadioButtons[i].disabled = false;
+		}
+		mapRadioButtons[0].checked = true;
+		map = 'map1';
 		socket.emit('createNewGame');
+	}
+	
+	var mapRadioButtonsOnClick = function(value){
+		map = value;
+		alert(value);
 	}
 	
 	showRangesCheckbox.onclick = function(){
@@ -503,8 +532,9 @@
 		readyGameButton.innerHTML = "I'm ready";
 		showRangesCheckbox.disabled = true;
 		repairUnitsCheckbox.disabled = true;
-		//showRangesCheckbox.checked = true;
-		//repairUnitsCheckbox.checked = true;
+		for(var i = 0; i < mapRadioButtons.length; i++){
+			mapRadioButtons[i].disabled = true;
+		} 
 		socket.emit('joinGame',{gameId:id,player2Id:selfId});
 	}
 	
