@@ -59,37 +59,44 @@ var Game = function(id){
 	self.setMap = function(map){
 		self.map = map;
 		if(map === 'map1'){
-			self.player1Base = {x: 100, y: 284, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
-			self.player2Base = {x: 1100, y: 284, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
-			self.mines = [
-				{id: Math.random(), x: 150, y: 84, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 150, y: 484, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 1050, y: 84, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 1050, y: 484, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 600, y: 134, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 600, y: 434, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 450, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 750, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
-			];
-			self.turrets = [
-				{id:Math.random(), x:300, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
-				{id:Math.random(), x:600, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
-				{id:Math.random(), x:900, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
-			];
-		} else if(map === 'map2'){
 			self.player1Base = {x: 150, y: 284, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
 			self.player2Base = {x: 1050, y: 284, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
 			self.mines = [
-				{id: Math.random(), x: 150, y: 84, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 150, y: 484, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 1050, y: 84, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 1050, y: 484, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 600, y: 134, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 600, y: 434, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 600, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 450, y: 100, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 450, y: 468, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 750, y: 100, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 750, y: 468, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 60, y: 60, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 60, y: 508, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 1140, y: 60, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 1140, y: 508, owner: 0, spin: Math.random()*360, countdown: 0},
 			];
 			self.turrets = [
-				{id:Math.random(), x:300, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
-				{id:Math.random(), x:900, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:250, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:950, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:600, y:125, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:600, y:443, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+			];
+		} else if(map === 'map2'){
+			self.player1Base = {x: 600, y: 100, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
+			self.player2Base = {x: 600, y: 468, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
+			self.mines = [
+				{id: Math.random(), x: 600, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 50, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 250, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 150, y: 134, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 150, y: 434, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 1150, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 950, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 1050, y: 134, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 1050, y: 434, owner: 0, spin: Math.random()*360, countdown: 0},
+			];
+			self.turrets = [
+				{id:Math.random(), x:500, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:700, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:150, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:1050, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
 			];
 		} else if(map === 'map3'){
 			self.player1Base = {x: 100, y: 284, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
@@ -99,16 +106,6 @@ var Game = function(id){
 				{id: Math.random(), x: 150, y: 484, owner: 0, spin: Math.random()*360, countdown: 0},
 				{id: Math.random(), x: 1050, y: 84, owner: 0, spin: Math.random()*360, countdown: 0},
 				{id: Math.random(), x: 1050, y: 484, owner: 0, spin: Math.random()*360, countdown: 0},
-			];
-			self.turrets = [
-				{id:Math.random(), x:300, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
-				{id:Math.random(), x:600, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
-				{id:Math.random(), x:900, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
-			];
-		} else if(map === 'map4'){
-			self.player1Base = {x: 200, y: 284, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
-			self.player2Base = {x: 1000, y: 284, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
-			self.mines = [
 				{id: Math.random(), x: 600, y: 134, owner: 0, spin: Math.random()*360, countdown: 0},
 				{id: Math.random(), x: 600, y: 434, owner: 0, spin: Math.random()*360, countdown: 0},
 				{id: Math.random(), x: 450, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
@@ -116,14 +113,50 @@ var Game = function(id){
 			];
 			self.turrets = [
 			];
-		} else if(map === 'map5'){
-			self.player1Base = {x: 100, y: 84, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
-			self.player2Base = {x: 1100, y: 484, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
+		} else if(map === 'map4'){
+			self.player1Base = {x: 100, y: 100, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
+			self.player2Base = {x: 1100, y: 468, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
 			self.mines = [
+				{id: Math.random(), x: 300, y: 70, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 70, y: 300, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 50, y: 50, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 900, y: 498, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 1130, y: 268, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 1150, y: 518, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 50, y: 518, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 1150, y: 50, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 500, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 700, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 600, y: 184, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 600, y: 384, owner: 0, spin: Math.random()*360, countdown: 0},
 			];
 			self.turrets = [
-				{id:Math.random(), x:300, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
-				{id:Math.random(), x:900, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:300, y:130, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:130, y:300, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:250, y:250, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:900, y:438, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:1070, y:268, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:950, y:318, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+			];
+		} else if(map === 'map5'){
+			self.player1Base = {x: 100, y: 100, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
+			self.player2Base = {x: 1100, y: 468, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
+			self.mines = [
+				{id: Math.random(), x: 220, y: 468, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 100, y: 348, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 980, y: 100, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 1100, y: 220, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 450, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 750, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 520, y: 100, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 670, y: 100, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 520, y: 468, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 670, y: 468, owner: 0, spin: Math.random()*360, countdown: 0},
+			];
+			self.turrets = [
+				{id:Math.random(), x:600, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:125, y:443, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:1075, y:125, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
 			];
 		}
 	}
@@ -140,7 +173,7 @@ var Game = function(id){
 		}
 		for (var i in self.turrets){
 			var turret = self.turrets[i];
-			turret.spin += 0.25;
+			turret.spin += 0.3;
 			if (turret.spin >= 360) turret.spin = 0;
 		}
 	}
