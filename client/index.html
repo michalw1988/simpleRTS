@@ -16,6 +16,7 @@
 
 <div id="lobbyScreenDiv">
 	<div id="lobbyHeaderDiv">
+		<button id="lobbyInfoButton">Game info</button>
 		simpleRTS
 		<button id="logoutButton">Logout</button>
 	</div>
@@ -33,6 +34,14 @@
 		<b>All players</b>
 		<div id="playersListDiv"></div>
 	</div>
+
+	<div id="gameInfoDiv">
+		<div id="gameInfoContentDiv">
+			here will be something cool
+			<button id="lobbyInfoCloseButton">Close</button>
+		</div>
+	</div>
+
 </div>
 
 <div id="roomScreenDiv">
@@ -62,19 +71,19 @@
 					</tr>
 					<tr>
 						<td><input type="radio" name="mapRadioButton" value="map2" id="map2RadioButton" onclick="mapRadioButtonsOnClick('map2')"></td>
-						<td><label for="map2RadioButton"><img src="client/img/map1.jpg"></label></td>
+						<td><label for="map2RadioButton"><img src="client/img/map2.jpg"></label></td>
 					</tr>
 					<tr>
 						<td><input type="radio" name="mapRadioButton" value="map3" id="map3RadioButton" onclick="mapRadioButtonsOnClick('map3')"></td>
-						<td><label for="map3RadioButton"><img src="client/img/map1.jpg"></label></td>
+						<td><label for="map3RadioButton"><img src="client/img/map3.jpg"></label></td>
 					</tr>
 					<tr>
 						<td><input type="radio" name="mapRadioButton" value="map4" id="map4RadioButton" onclick="mapRadioButtonsOnClick('map4')"></td>
-						<td><label for="map4RadioButton"><img src="client/img/map1.jpg"></label></td>
+						<td><label for="map4RadioButton"><img src="client/img/map4.jpg"></label></td>
 					</tr>
 					<tr>
 						<td><input type="radio" name="mapRadioButton" value="map5" id="map5RadioButton" onclick="mapRadioButtonsOnClick('map5')"></td>
-						<td><label for="map5RadioButton"><img src="client/img/map1.jpg"></label></td>
+						<td><label for="map5RadioButton"><img src="client/img/map5.jpg"></label></td>
 					</tr>
 				</tbody>
 			</table>
@@ -120,7 +129,6 @@
 	</div>
 	
 </div>
-
 
 
 
@@ -218,6 +226,10 @@
 	var unit3ButtonImage = document.getElementById("unit3ButtonImage");
 	var unit4ButtonImage = document.getElementById("unit4ButtonImage");
 	var progressBarProgress = document.getElementById("progressBarProgress");
+	
+	var lobbyInfoButton = document.getElementById("lobbyInfoButton");
+	var gameInfoDiv = document.getElementById("gameInfoDiv");
+	var lobbyInfoCloseButton = document.getElementById("lobbyInfoCloseButton");
 	
 	
 	var Img = {};
@@ -640,9 +652,15 @@
 		}
 	}
 	
+	lobbyInfoButton.onclick = function(){
+		gameInfoDiv.style.display = 'block';
+	}
 	
+	lobbyInfoCloseButton.onclick = function(){
+		gameInfoDiv.style.display = 'none';
+	}
 	
-	
+	//----------------------
 	
 	socket.on('selfId',function(data){
 		selfId = data;
@@ -658,6 +676,15 @@
 				playersListDiv.innerHTML += player.name + '<br>';
 			}
 		}
+		
+		// how many players online - info in page title
+		var playerCount = data.length;
+		if (playerCount === 1){
+			document.title = 'simpleRTS (' + playerCount + ' player online)';
+		} else {
+			document.title = 'simpleRTS (' + playerCount + ' players online)';
+		}
+		
 	});
 	
 	socket.on('lobbyChatMessageToDisplay',function(data){

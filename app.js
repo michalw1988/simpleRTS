@@ -139,24 +139,22 @@ var Game = function(id){
 				{id:Math.random(), x:950, y:318, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
 			];
 		} else if(map === 'map5'){
-			self.player1Base = {x: 100, y: 100, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
-			self.player2Base = {x: 1100, y: 468, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
+			self.player1Base = {x: 300, y: 284, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
+			self.player2Base = {x: 900, y: 284, hp: 5000, hpMax: 5000, spin: Math.random()*360,};
 			self.mines = [
-				{id: Math.random(), x: 220, y: 468, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 100, y: 348, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 980, y: 100, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 1100, y: 220, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 450, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 750, y: 284, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 520, y: 100, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 670, y: 100, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 520, y: 468, owner: 0, spin: Math.random()*360, countdown: 0},
-				{id: Math.random(), x: 670, y: 468, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 100, y: 184, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 100, y: 384, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 1100, y: 184, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 1100, y: 384, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 600, y: 204, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 600, y: 364, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 500, y: 484, owner: 0, spin: Math.random()*360, countdown: 0},
+				{id: Math.random(), x: 700, y: 84, owner: 0, spin: Math.random()*360, countdown: 0},
 			];
 			self.turrets = [
 				{id:Math.random(), x:600, y:284, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
-				{id:Math.random(), x:125, y:443, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
-				{id:Math.random(), x:1075, y:125, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:500, y:84, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
+				{id:Math.random(), x:700, y:484, owner:0, spin:Math.random()*360, gunAngle:Math.random()*360, countdown:0, reloadTime:10, range:130, damage:40, targetId:''},
 			];
 		}
 	}
@@ -888,6 +886,7 @@ io.sockets.on('connection', function(socket){
 	
 	// emiting selfId to new player
 	socket.emit('selfId',socket.id);
+	updateLobbyPlayersList();
 	
 	socket.on('disconnect',function(){
 		// if need to close room or update someone's room list

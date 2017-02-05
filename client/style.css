@@ -74,6 +74,17 @@ body {
 	font-size: 40px;
 }
 
+#lobbyInfoButton{
+	position: absolute;
+	left: 3px;
+	top: 3px;
+	border: 0px solid #cccccc;
+	width: 100px;
+	height: 24px;
+	color: #336699;
+	background-color: #cccccc;
+}
+
 #gamesListContainerDiv{
 	position: absolute;
 	top: 57px;
@@ -436,7 +447,7 @@ body {
 
 #endGameMessageDiv{
 	display: none;
-	position:absolute;
+	position: absolute;
 	top: 0px;
 	left: 0px;
 	border: 1px solid black;
@@ -469,3 +480,37 @@ body {
 	background-color: #cccccc;
 }
 
+
+
+#gameInfoDiv{
+	display: none;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	border: 1px solid black;
+	width: 1200px;
+	height: 600px;
+	margin: 0 auto; 
+	background-color: rgba(0,0,0,0.4);
+}
+
+#gameInfoContentDiv{
+	position: relative;
+	margin: 0 auto; 
+	margin-top: 90px;
+	width: 800px;
+	height: 400px;
+	border: 2px solid #cccccc;
+	background-color: #336699;
+}
+
+#lobbyInfoCloseButton{
+	position: absolute;
+	bottom: 3px;
+	right: 3px;
+	border: 0px solid #cccccc;
+	width: 100px;
+	height: 24px;
+	color: #336699;
+	background-color: #cccccc;
+}
