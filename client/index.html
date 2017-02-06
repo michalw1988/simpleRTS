@@ -37,7 +37,7 @@
 
 	<div id="gameInfoDiv">
 		<div id="gameInfoContentDiv">
-			here will be something cool
+			<img src="client/img/gameInfo.jpg">
 			<button id="lobbyInfoCloseButton">Close</button>
 		</div>
 	</div>
@@ -128,6 +128,8 @@
 		<button id="endGameMessageButton">Exit to lobby</button>
 	</div>
 	
+	<input id="inGameChatInput" type="text"maxlength="50"></input>
+	
 </div>
 
 
@@ -153,6 +155,7 @@
 	var mouseEndY = 0;
 	var isMouseLeftKeyDown = false;
 	var isMouseRightKeyDown = false;
+	var isInGameChatActive = false;
 	var topLeftX = 0;
 	var topLeftY = 0;
 	var bottomRightX = 0;
@@ -176,6 +179,7 @@
 		w: false,
 		e: false,
 		r: false,
+		enter: false,
 	};
 	
 	var isBattleUnitSelected = false;
@@ -226,6 +230,7 @@
 	var unit3ButtonImage = document.getElementById("unit3ButtonImage");
 	var unit4ButtonImage = document.getElementById("unit4ButtonImage");
 	var progressBarProgress = document.getElementById("progressBarProgress");
+	var inGameChatInput = document.getElementById("inGameChatInput");
 	
 	var lobbyInfoButton = document.getElementById("lobbyInfoButton");
 	var gameInfoDiv = document.getElementById("gameInfoDiv");
@@ -1294,15 +1299,17 @@
 		} else if (whichCursor === 'attack'){
 			document.getElementById("gameCanvas").style.cursor = "url('/client/img/attack.png') 9 9, auto";
 		}
-		
-		
-		
 	});
 	
 	socket.on('hudUpdate',function(data){
 		credits = data.credits;
 		creditsDiv.innerHTML = 'Credits: $' + data.credits;
 		progressBarProgress.style.width = data.productionProgress;
+	});
+	
+	socket.on('newInGameChatMessage',function(data){
+		// color: messageColor, playerName: player.name, message: data.message
+		console.log('Color: ' + data.color + ' | Name: ' + data.playerName + ' | Message: ' + data.message);
 	});
 	
 
@@ -1545,6 +1552,15 @@
 		if (e.keyCode === 82){
 			keys['r'] = true;
 		}
+		if (e.keyCode === 13){
+			keys['enter'] = true;
+			
+			if (isInGameChatActive === false){
+				inGameChatInput.style.display = 'block';
+				isInGameChatActive = true;
+				inGameChatInput.focus();
+			}
+		}
 		
 		// set group
 		if(isEngineerUnitSelected || isBattleUnitSelected){ // set group
@@ -1650,6 +1666,21 @@
 		}
 		if (e.keyCode === 82){
 			keys['r'] = false;
+		}
+		if (e.keyCode === 13){
+			keys['enter'] = false;
+		}
+	}
+	
+	document.getElementById("inGameChatInput").onkeydown = function(e){
+		if (e.keyCode === 13){
+			if(inGameChatInput.value !== ''){
+				socket.emit('inGameChatInputSent',{gameId: gameId, playerId: selfId, message: inGameChatInput.value});
+			}
+			inGameChatInput.style.display = 'none';
+			inGameChatInput.value = '';
+			isInGameChatActive = false;
+			document.getElementById('gameCanvas').focus();
 		}
 	}
 	

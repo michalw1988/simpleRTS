@@ -1251,6 +1251,23 @@ io.sockets.on('connection', function(socket){
 		}
 	});
 	
+	socket.on('inGameChatInputSent',function(data){
+		var game = GAME_LIST[data.gameId];
+		var player = PLAYER_LIST[data.playerId];
+		var messageColor;
+		if (data.playerId === game.player1Id){
+			messageColor = '#52E365';
+		} else {
+			messageColor = '#E3E152';
+		}
+		//console.log(player.name + ' sent message: ' + data.message);
+		if(SOCKET_LIST[game.player1Id]){
+			SOCKET_LIST[game.player1Id].emit('newInGameChatMessage',{color: messageColor, playerName: player.name, message: data.message});
+		}
+		if(SOCKET_LIST[game.player2Id]){
+			SOCKET_LIST[game.player2Id].emit('newInGameChatMessage',{color: messageColor, playerName: player.name, message: data.message});
+		}
+	});
 	
 });
 

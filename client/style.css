@@ -497,9 +497,9 @@ body {
 #gameInfoContentDiv{
 	position: relative;
 	margin: 0 auto; 
-	margin-top: 90px;
-	width: 800px;
-	height: 400px;
+	margin-top: 40px;
+	width: 900px;
+	height: 500px;
 	border: 2px solid #cccccc;
 	background-color: #336699;
 }
@@ -513,4 +513,16 @@ body {
 	height: 24px;
 	color: #336699;
 	background-color: #cccccc;
+}
+
+#inGameChatInput{
+	display: none;
+	position: absolute;
+	bottom: 3px;
+	right: 3px;
+	width: 590px;
+	border: 1px solid rgba(240,240,240,0.5);
+	height: 24px;
+	background-color: rgba(240,240,240,0.2);
+	color: #eeeeee;
 }
