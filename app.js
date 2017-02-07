@@ -1058,26 +1058,28 @@ io.sockets.on('connection', function(socket){
 	
 	socket.on('endGame',function(data){ // reason:'surrender', gameId:gameId, playerId:selfId
 		var game = GAME_LIST[data.gameId];
-		var player1 = PLAYER_LIST[game.player1Id];
-		var player2 = PLAYER_LIST[game.player2Id];
-		player1.playing = false;
-		player1.gameId = "";
-		player2.playing = false;
-		player2.gameId = "";
-		
-		if(data.reason === 'surrender'){
-			if(game.player1Id === data.playerId){ // player 1 surrendered
-				SOCKET_LIST[game.player1Id].emit('gameEnded',{message: '<div style="color: #F72828; margin-bottom: 2px;"><b>Game over.</b></div>You surrendered.'});
-				SOCKET_LIST[game.player2Id].emit('gameEnded',{message: '<div style="color: #3DF53D; margin-bottom: 2px;"><b>Congratulations!</b></div>Your opponent has surrendered.'});
-			} else { // player 2 surrendered
-				SOCKET_LIST[game.player1Id].emit('gameEnded',{message: '<div style="color: #3DF53D; margin-bottom: 2px;"><b>Congratulations!</b></div>Your opponent has surrendered.'});
-				SOCKET_LIST[game.player2Id].emit('gameEnded',{message: '<div style="color: #F72828; margin-bottom: 2px;"><b>Game over.</b></div>You surrendered.'});
+		if(game){
+			var player1 = PLAYER_LIST[game.player1Id];
+			var player2 = PLAYER_LIST[game.player2Id];
+			player1.playing = false;
+			player1.gameId = "";
+			player2.playing = false;
+			player2.gameId = "";
+			
+			if(data.reason === 'surrender'){
+				if(game.player1Id === data.playerId){ // player 1 surrendered
+					SOCKET_LIST[game.player1Id].emit('gameEnded',{message: '<div style="color: #F72828; margin-bottom: 2px;"><b>Game over.</b></div>You surrendered.'});
+					SOCKET_LIST[game.player2Id].emit('gameEnded',{message: '<div style="color: #3DF53D; margin-bottom: 2px;"><b>Congratulations!</b></div>Your opponent has surrendered.'});
+				} else { // player 2 surrendered
+					SOCKET_LIST[game.player1Id].emit('gameEnded',{message: '<div style="color: #3DF53D; margin-bottom: 2px;"><b>Congratulations!</b></div>Your opponent has surrendered.'});
+					SOCKET_LIST[game.player2Id].emit('gameEnded',{message: '<div style="color: #F72828; margin-bottom: 2px;"><b>Game over.</b></div>You surrendered.'});
+				}
 			}
+			
+			delete GAME_LIST[data.gameId];
+			updateLobbyGamesList();
+			updateLobbyPlayersList();
 		}
-		
-		delete GAME_LIST[data.gameId];
-		updateLobbyGamesList();
-		updateLobbyPlayersList();
 	});
 	
 	socket.on('procudeUnit',function(data){
@@ -1253,19 +1255,21 @@ io.sockets.on('connection', function(socket){
 	
 	socket.on('inGameChatInputSent',function(data){
 		var game = GAME_LIST[data.gameId];
-		var player = PLAYER_LIST[data.playerId];
-		var messageColor;
-		if (data.playerId === game.player1Id){
-			messageColor = '#52E365';
-		} else {
-			messageColor = '#E3E152';
-		}
-		//console.log(player.name + ' sent message: ' + data.message);
-		if(SOCKET_LIST[game.player1Id]){
-			SOCKET_LIST[game.player1Id].emit('newInGameChatMessage',{color: messageColor, playerName: player.name, message: data.message});
-		}
-		if(SOCKET_LIST[game.player2Id]){
-			SOCKET_LIST[game.player2Id].emit('newInGameChatMessage',{color: messageColor, playerName: player.name, message: data.message});
+		if(game){
+			var player = PLAYER_LIST[data.playerId];
+			var messageColor;
+			if (data.playerId === game.player1Id){
+				messageColor = '#52E365';
+			} else {
+				messageColor = '#E3E152';
+			}
+			//console.log(player.name + ' sent message: ' + data.message);
+			if(SOCKET_LIST[game.player1Id]){
+				SOCKET_LIST[game.player1Id].emit('newInGameChatMessage',{color: messageColor, playerName: player.name, message: data.message});
+			}
+			if(SOCKET_LIST[game.player2Id]){
+				SOCKET_LIST[game.player2Id].emit('newInGameChatMessage',{color: messageColor, playerName: player.name, message: data.message});
+			}
 		}
 	});
 	

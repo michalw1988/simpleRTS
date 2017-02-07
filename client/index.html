@@ -168,6 +168,7 @@
 	var myUnits = null;
 	var enemyUnits = null;
 	var existingExplosions = {};
+	var inGameChatMessages = {};
 	
 	var keys = {
 		_1: false,
@@ -781,6 +782,10 @@
 			unit4ButtonImage.src = '/client/img/unit4b.png';
 		}
 		document.getElementById('gameCanvas').focus();
+		
+		for (var i in inGameChatMessages){
+			delete inGameChatMessages[inGameChatMessages[i].id];
+		}
 	});
 	
 	socket.on('gameEnded',function(data){
@@ -1288,6 +1293,23 @@
 			}
 		}
 		
+		// chat messages
+		gameCanvas.font = '12px Verdana';
+		var displacement = 0;
+		for (var i in inGameChatMessages){
+			var chatMessage = inGameChatMessages[i];
+			if(chatMessage.lifeSpan > 0){
+				chatMessage.lifeSpan--;
+				gameCanvas.fillStyle = chatMessage.color;
+				//gameCanvas.fillText('Chat messages: ' + Object.keys(inGameChatMessages).length, 5, 560-displacement);
+				gameCanvas.fillText(chatMessage.playerName + ': ' + chatMessage.message, 5, 560-displacement);
+				displacement += 14;
+			} else {
+				delete inGameChatMessages[chatMessage.id];
+			}
+		}
+		
+
 		
 		// cursor
 		if (whichCursor === 'neutral'){
@@ -1309,7 +1331,10 @@
 	
 	socket.on('newInGameChatMessage',function(data){
 		// color: messageColor, playerName: player.name, message: data.message
-		console.log('Color: ' + data.color + ' | Name: ' + data.playerName + ' | Message: ' + data.message);
+		//console.log('Color: ' + data.color + ' | Name: ' + data.playerName + ' | Message: ' + data.message);
+		
+		var id = Math.random();
+		inGameChatMessages[id] = {id: id, color: data.color, playerName: data.playerName, message: data.message, lifeSpan: 200};
 	});
 	
 
