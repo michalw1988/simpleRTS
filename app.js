@@ -1259,9 +1259,11 @@ io.sockets.on('connection', function(socket){
 			var player = PLAYER_LIST[data.playerId];
 			var messageColor;
 			if (data.playerId === game.player1Id){
-				messageColor = '#52E365';
+				//messageColor = '#52E365';
+				messageColor = 'rgba(82,227,101,0.4)';
 			} else {
-				messageColor = '#E3E152';
+				//messageColor = '#E3E152';
+				messageColor = 'rgba(227,225,82,0.4)';
 			}
 			//console.log(player.name + ' sent message: ' + data.message);
 			if(SOCKET_LIST[game.player1Id]){
